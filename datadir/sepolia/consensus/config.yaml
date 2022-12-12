@@ -1,0 +1,6 @@
+datadir: "/datadir"
+checkpoint-sync-url: "https://beaconstate-sepolia.chainsafe.io"
+genesis-beacon-api-url: "https://beaconstate-sepolia.chainsafe.io"
+rpc-host: "0.0.0.0"
+jwt-secret: "/datadir/jwt.hex"
+accept-terms-of-use: true

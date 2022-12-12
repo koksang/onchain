@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  geth:
+    image: ethereum/client-go:stable
+    restart: always
+    stop_grace_period: 1m
+    volumes:
+      - ./datadir/${NETWORK:-sepolia}:/datadir
+    command: >
+      --${NETWORK:-sepolia}
+      --config /datadir/execution/config.toml
+    ports:
+      - 30303:30303
+      - 8551:8551
+      - 8545:8545
+      - 9191:9191
+    networks:
+      - onchain-network
+
+  beacon:
+    image: gcr.io/prysmaticlabs/prysm/beacon-chain:stable
+    restart: always
+    volumes:
+      - ./datadir/${NETWORK:-sepolia}:/datadir
+    command: >
+      --${NETWORK:-sepolia}
+      --config-file /datadir/consensus/config.yaml
+      --execution-endpoint http://geth:8551
+    ports:
+      - 3500:3500
+    depends_on:
+      geth:
+        condition: service_started
+    networks:
+      - onchain-network
+
+networks:
+  onchain-network:
+    name: onchain-network
+    driver: bridge
+

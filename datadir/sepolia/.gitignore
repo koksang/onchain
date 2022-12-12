@@ -1,0 +1,10 @@
+# folders
+beaconchaindata
+geth
+keystore
+
+# files
+geth.ipc
+*jwt*
+metaData
+tosaccepted
