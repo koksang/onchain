@@ -1,0 +1,13 @@
+# folders
+beaconchaindata
+geth
+keystore
+validators
+db
+
+# files
+geth.ipc
+*jwt*
+metaData
+tosaccepted
+beacon_node.*
