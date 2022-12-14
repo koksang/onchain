@@ -6,7 +6,7 @@ services:
     restart: always
     stop_grace_period: 1m
     volumes:
-      - ./datadir/${NETWORK:-goerli}:/datadir
+      - ./node/ethereum/${NETWORK:-goerli}:/datadir
     command: >
       --${NETWORK:-goerli}
       --config /datadir/execution/config.toml
@@ -21,7 +21,7 @@ services:
   beacon-node-sync:
     image: statusim/nimbus-eth2:amd64-v22.11.1
     volumes:
-      - ./datadir/${NETWORK:-goerli}:/home/user/nimbus-eth2/build/data
+      - ./node/ethereum/${NETWORK:-goerli}:/home/user/nimbus-eth2/build/data
     command: >
       trustedNodeSync
       --config-file="/home/user/nimbus-eth2/build/data/consensus/node-sync-config.toml"
@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
     stop_grace_period: 1m
     volumes:
-      - ./datadir/${NETWORK:-goerli}:/home/user/nimbus-eth2/build/data
+      - ./node/ethereum/${NETWORK:-goerli}:/home/user/nimbus-eth2/build/data
     command: >
       --config-file="/home/user/nimbus-eth2/build/data/consensus/config.toml"
       --web3-url="http://geth:8551"
