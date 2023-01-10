@@ -57,10 +57,11 @@ class PulsarSource(BaseSource):
         while self.running:
             try:
                 message = consumer.receive()
+                consumer.acknowledge(message)
                 progress += 1
                 data, id = message.data().decode("utf-8"), message.message_id()
-                consumer.acknowledge(message)
                 log.debug(f"Received message '{data}' id='{id}'")
+                yield data
             except:
                 self.running = False
                 consumer.negative_acknowledge(message)
