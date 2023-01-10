@@ -1,36 +1,36 @@
-"""Pulsar Sink"""
+"""Pulsar source"""
 
 from typing import Iterable, Union
 import pulsar
-from onchain.core.sinks.base import BaseSink
+from onchain.core.sources.base import BaseSource
 from onchain.models.mode import ExecutionMode
 from onchain.core.logger import log
 
 DEFAULT_PULSAR_PROXY_IP = "pulsar:://localhost:6650"
 
 
-class PulsarSink(BaseSink):
+class PulsarSource(BaseSource):
     execution_mode = [ExecutionMode.stream]
 
     def __init__(
         self,
         client_config: dict,
-        producer_config: dict,
+        consumer_config: dict,
     ) -> None:
         """Init
 
         Args:
-            producer_config (str): PULSAR producer configuration.
             client_config (dict): PULSAR Client configuration.
+            consumer_config (str): PULSAR consumer configuration.
         """
         self.client_config = client_config
-        self.producer_config = producer_config
+        self.consumer_config = consumer_config
         self.client = None
         log.info(
-            f"Initiated {self._name} with client; {self.client_config}, producer: {self.producer_config}"
+            f"Initiated {self._name} with client; {self.client_config}, consumer: {self.consumer_config}"
         )
 
-    def connect(self, reconnect: bool = False) -> None:
+    def connect(self, reconnect: bool = False, **connection_config: dict) -> None:
         """Establish client connection
 
         Args:
@@ -43,17 +43,11 @@ class PulsarSink(BaseSink):
             self.client = pulsar.Client(**self.client_config)
             log.info(f"Connected to pulsar client: {self.client_config}")
 
-    def write(self, items: Union[Iterable[str], list[str]]) -> None:
-        def callback(response, message_id):
-            log.debug(f"Message published: {response}")
-
+    def read(self, items: Union[Iterable[str], list[str]]) -> None:
         if not self.client:
             self.connect()
 
         progress = 0
-        producer = self.client.create_producer(self.producer_config)
-        for item in items:
-            producer.send_async(item.encode("utf-8"), callback)
-            progress += 1
+        consumer = self.client.subsribe(self.consumer_config)
 
-        log.info(f"Produced {progress} messages.")
+        
