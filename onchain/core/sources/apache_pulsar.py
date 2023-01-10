@@ -1,6 +1,6 @@
 """Pulsar source"""
 
-from typing import Generator
+from typing import Iterator
 import pulsar
 from onchain.core.sources.base import BaseSource
 from onchain.models.mode import ExecutionMode
@@ -44,7 +44,7 @@ class PulsarSource(BaseSource):
             self.client = pulsar.Client(**self.client_config)
             log.info(f"Connected to pulsar client: {self.client_config}")
 
-    def read(self) -> Generator[str, None, None]:
+    def read(self) -> Iterator[str]:
         """Read from consumer"""
         self.running = True
         if not self.client:
