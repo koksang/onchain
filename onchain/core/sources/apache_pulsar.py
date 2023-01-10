@@ -68,4 +68,5 @@ class PulsarSource(BaseSource):
             finally:
                 self.running = False
 
+        self.client.close()
         log.info(f"Consumed {progress} messages.")

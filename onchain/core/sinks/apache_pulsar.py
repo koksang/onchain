@@ -62,4 +62,5 @@ class PulsarSink(BaseSink):
             producer.send_async(item.encode("utf-8"), callback)
             progress += 1
 
+        self.client.close()
         log.info(f"Produced {progress} messages.")
