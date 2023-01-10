@@ -26,6 +26,7 @@ class PulsarSource(BaseSource):
         self.client_config = client_config
         self.consumer_config = consumer_config
         self.client = None
+        self.running = None
         log.info(
             f"Initiated {self._name} with client; {self.client_config}, consumer: {self.consumer_config}"
         )
@@ -43,11 +44,27 @@ class PulsarSource(BaseSource):
             self.client = pulsar.Client(**self.client_config)
             log.info(f"Connected to pulsar client: {self.client_config}")
 
-    def read(self, items: Union[Iterable[str], list[str]]) -> None:
+    def read(self) -> None:
+        """Read from consumer"""
+        self.running = True
         if not self.client:
             self.connect()
 
+        self.running = True
         progress = 0
-        consumer = self.client.subsribe(self.consumer_config)
+        consumer = self.client.subscribe(self.consumer_config)
 
-        
+        while self.running:
+            try:
+                message = consumer.receive()
+                progress += 1
+                data, id = message.data().decode("utf-8"), message.message_id()
+                consumer.acknowledge(message)
+                log.debug(f"Received message '{data}' id='{id}'")
+            except:
+                self.running = False
+                consumer.negative_acknowledge(message)
+            finally:
+                self.running = False
+
+        log.info(f"Consumed {progress} messages.")

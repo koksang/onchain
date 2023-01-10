@@ -44,6 +44,12 @@ class PulsarSink(BaseSink):
             log.info(f"Connected to pulsar client: {self.client_config}")
 
     def write(self, items: Union[Iterable[str], list[str]]) -> None:
+        """Write using producer
+
+        Args:
+            items (Union[Iterable[str], list[str]]): messages to write
+        """
+
         def callback(response, message_id):
             log.debug(f"Message published: {response}")
 
