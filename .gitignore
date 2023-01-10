@@ -1,4 +1,14 @@
 # folders
 test
+# folders
 notebooks
 .ipynb_checkpoints
+__pycache__
+
+# files
+.csv
+.DS_Store
+.vscode
+.idea
+Thumbs.db
+*test.*
