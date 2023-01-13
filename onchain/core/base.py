@@ -14,3 +14,10 @@ class BaseModule(ABC):
     def run(self, execution_mode: ExecutionMode) -> None:
         """Run worker"""
         pass
+
+
+class BaseService(ABC):
+    @abstractmethod
+    def run(self, execution_mode: ExecutionMode) -> None:
+        """Run worker"""
+        pass

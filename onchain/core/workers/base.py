@@ -7,3 +7,7 @@ class BaseWorker(BaseModule):
     @abstractmethod
     def process(self) -> None:
         pass
+
+    @abstractmethod
+    def run(self) -> None:
+        pass

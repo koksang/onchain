@@ -21,7 +21,6 @@ message Block {
   int64 timestamp = 18;
   repeated string transactions = 19;
   repeated string uncles = 20;
-  int64 data_timestamp = 21;
 }
 
 message Transaction {
@@ -39,7 +38,6 @@ message Transaction {
   int64 v = 12;
   string r = 13;
   string s = 14;
-  int64 data_timestamp = 15;
 }
 
 message Log {
@@ -52,7 +50,6 @@ message Log {
   string address = 7;
   string data = 8;
   repeated string topics = 9;
-  int64 data_timestamp = 10;
 }
 
 message Receipt {
@@ -71,7 +68,6 @@ message Receipt {
   string type = 13;
   string root = 14;
   bool status = 15;
-  int64 data_timestamp = 16;
 }
 
 message StructLog {
@@ -85,7 +81,6 @@ message StructLog {
   repeated string memory = 8;
   string storage = 9;
   int64 refund = 10;
-  int64 data_timestamp = 11;
 }
 
 message Trace {
@@ -93,5 +88,4 @@ message Trace {
   int64 gas = 2;
   string return_value = 3;
   repeated StructLog StructLogs = 4;
-  int64 data_timestamp = 5;
 }
