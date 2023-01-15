@@ -1,0 +1,2 @@
+path_to_proto_pymodel: ${mapper.base_path}.evm_pb2
+model: ${service.type}

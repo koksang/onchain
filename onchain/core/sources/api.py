@@ -5,12 +5,12 @@
 from typing import Iterator, Callable
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-from onchain.core.sources.base import BaseSource
+from onchain.core.base import BaseSource
 from onchain.models.mode import ExecutionMode
 from onchain.core.logger import log
 
 
-class EVMSource(BaseSource):
+class APISource(BaseSource):
     execution_mode = [ExecutionMode.stream]
 
     def __init__(self, config: dict, func: Callable) -> None:
@@ -36,6 +36,9 @@ class EVMSource(BaseSource):
         if not (self.client and reconnect) or reconnect:
             self.client = Web3(Web3.HTTPProvider(**client_config))
             self.client.middleware_onion.inject(geth_poa_middleware, layer=0)
+            assert (
+                self.client.isConnected()
+            ), f"Failed to connect to web3 client: {client_config}"
             log.info(f"Connected to web3 client: {client_config}")
 
     def read(self) -> Iterator[str]:

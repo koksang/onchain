@@ -1,0 +1,4 @@
+client:
+  service_url: pulsar://localhost:6650
+producer:
+  topic: onchain/${service.blockchain}/test
