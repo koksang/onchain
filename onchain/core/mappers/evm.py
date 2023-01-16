@@ -1,48 +1,69 @@
 """Mapper for EVM blockchain data"""
 
+import json
 from web3.datastructures import AttributeDict
 
 
 class EVMMapper:
     @staticmethod
-    def block_to_dict(data: AttributeDict) -> dict:
+    def block_to_dict(data: AttributeDict) -> str:
         """Convert EVM block to json dict
 
         Args:
             data (AttributeDict): Block attribute dict
 
         Returns:
-            dict: Converted json dict
+            str: Converted json dict str
         """
-        data_json = vars(data)
-        data_json["proofOfAuthorityData"] = data_json["proofOfAuthorityData"].hex()
-        data_json["logsBloom"] = data_json["logsBloom"].hex()
-        data_json["miner"] = data_json["miner"].hex()
-        data_json["mixHash"] = data_json["mixHash"].hex()
-        data_json["nonce"] = data_json["nonce"].hex()
-        data_json["parentHash"] = data_json["parentHash"].hex()
-        data_json["receiptsRoot"] = data_json["receiptsRoot"].hex()
-        data_json["sha3Uncles"] = data_json["sha3Uncles"].hex()
-        data_json["stateRoot"] = data_json["stateRoot"].hex()
-        data_json["transactions"] = list(
-            map(lambda item: item.hex(), data_json["transactions"])
-        )
-        data_json["transactionsRoot"] = data_json["transactionsRoot"].hex()
-        return data_json
+        datamodel = {
+            "number": data.number,
+            "hash": data.hash.hex(),
+            "parentHash": data.parentHash.hex(),
+            "nonce": data.nonce.hex(),
+            "sha3Uncles": data.sha3Uncles.hex(),
+            "logsBloom": data.logsBloom.hex(),
+            "transactionsRoot": data.transactionsRoot.hex(),
+            "stateRoot": data.stateRoot.hex(),
+            "receiptsRoot": data.receiptsRoot.hex(),
+            "miner": data.miner,
+            "difficulty": data.difficulty,
+            "totalDifficulty": data.totalDifficulty,
+            "extraData": data.get("extraData", None),
+            "size": data.size,
+            "gasLimit": data.gasLimit,
+            "gasUsed": data.gasUsed,
+            "baseFeePerGas": data.get("baseFeePerGas"),
+            "timestamp": data.timestamp,
+            "transactions": list(map(lambda item: item.hex(), data.transactions)),
+            "uncles": list(map(lambda item: item.hex(), data.uncles)),
+        }
+        # TODO: convert to protobuf schema later
+        return json.dumps(datamodel)
 
     @staticmethod
-    def transaction_to_dict(data: AttributeDict) -> dict:
+    def transaction_to_dict(data: AttributeDict) -> str:
         """Convert EVM transaction to json dict
 
         Args:
             data (AttributeDict): Transaction attribute dict
 
         Returns:
-            dict: Converted json dict
+            str: Converted json dict str
         """
-        data_json = vars(data)
-        data_json["blockHash"] = data_json["blockHash"].hex()
-        data_json["hash"] = data_json["hash"].hex()
-        data_json["r"] = data_json["r"].hex()
-        data_json["s"] = data_json["s"].hex()
-        return data_json
+        datamodel = {
+            "blockHash": data.blockHash.hex(),
+            "blockNumber": data.blockNumber,
+            "from": data["from"],
+            "gas": data.gas,
+            "gasPrice": data.gasPrice,
+            "hash": data.hash.hex(),
+            "input": data.input,
+            "nonce": data.nonce.hex(),
+            "to": data.to,
+            "transactionIndex": data.transactionIndex,
+            "value": data.value,
+            "v": data.v,
+            "r": data.r.hex(),
+            "s": data.s.hex(),
+        }
+        return json.dumps(datamodel)

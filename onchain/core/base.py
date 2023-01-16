@@ -1,6 +1,5 @@
 """Base module"""
 from abc import ABC, abstractmethod
-from onchain.models.mode import ExecutionMode
 
 
 class BaseModule(ABC):
@@ -10,14 +9,39 @@ class BaseModule(ABC):
     def _name(self):
         return self.__class__.__name__
 
+
+class BaseSource(BaseModule):
     @abstractmethod
-    def run(self, execution_mode: ExecutionMode) -> None:
-        """Run worker"""
+    def connect(self):
+        pass
+
+    @abstractmethod
+    def read(self):
+        pass
+
+
+class BaseSink(BaseModule):
+    @abstractmethod
+    def connect(self) -> object:
+        pass
+
+    @abstractmethod
+    def write(self) -> None:
+        pass
+
+
+class BaseWorker(BaseModule):
+    @abstractmethod
+    def run(self) -> None:
         pass
 
 
 class BaseService(ABC):
+    @property
+    def _name(self):
+        return self.__class__.__module__
+
     @abstractmethod
-    def run(self, execution_mode: ExecutionMode) -> None:
+    def run(self) -> None:
         """Run worker"""
         pass

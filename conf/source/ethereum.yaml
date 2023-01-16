@@ -1,0 +1,2 @@
+client:
+  endpoint_uri: "https://eth-mainnet.g.alchemy.com/v2/${env:API_KEY}"

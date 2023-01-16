@@ -1,8 +1,6 @@
 """Ray Stream Worker"""
 
-from onchain.core.workers.base import BaseWorker
-from onchain.core.sources.base import BaseSource
-from onchain.core.sinks.base import BaseSink
+from onchain.core.base import BaseWorker, BaseSource, BaseSink
 
 
 class RayStreamer(BaseWorker):

@@ -11,7 +11,7 @@ from google.cloud.bigquery_storage import (
     ProtoSchema,
     types,
 )
-from onchain.core.sinks.base import BaseSink
+from onchain.core.base import BaseSink
 from onchain.core.mappers.proto import ProtoMapper
 from onchain.core.logger import log
 

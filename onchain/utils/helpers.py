@@ -2,9 +2,11 @@
 
 import pytz
 from typing import Union
+from pathlib import Path
 from dateutil.parser import parse
 from datetime import datetime, timezone
 from onchain.core.logger import log
+from onchain.constants import SERVICES_PATH
 
 
 def timestamp_to_integer(ts: Union[datetime, str]) -> int:
@@ -24,3 +26,24 @@ def timestamp_to_integer(ts: Union[datetime, str]) -> int:
     ts_value = int(delta.total_seconds()) * 1000000 + int(delta.microseconds)
     log.debug(f"Converted {ts} to {ts_value}")
     return ts_value
+
+
+def get_service(config: dict):
+    """Get module file from path
+
+    Args:
+        config (dict): Service config
+
+    Returns:
+        str: Filtered module absolute path
+    """
+    group, source, sink = config["group"], config["source"], config["sink"]
+    path = Path(SERVICES_PATH, group)
+    search_module = f"*{source}__{sink}.py"
+    module = [str(path.absolute()) for path in path.rglob(search_module)]
+    assert (
+        len(module) == 1
+    ), f"Found >1 module in path: {str(path)} with keywords: {search_module}"
+    module = module[0]
+    log.info(f"Found service: {module}.")
+    return module

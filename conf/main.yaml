@@ -1,0 +1,11 @@
+defaults:
+  - service: polygon
+  - source: polygon
+  - sink: pulsar
+  - mapper: evm
+  - _self_
+mapper:
+  base_path: onchain.models.blockchains
+runtime:
+  start_block: 0
+  end_block: 10

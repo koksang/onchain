@@ -2,11 +2,19 @@
 
 from typing import Iterator
 import pulsar
-from onchain.core.sources.base import BaseSource
+from onchain.core.base import BaseSource
 from onchain.models.mode import ExecutionMode
 from onchain.core.logger import log
 
-DEFAULT_PULSAR_PROXY_IP = "pulsar:://localhost:6650"
+DEFAULT_PULSAR_PROXY_IP = "pulsar://localhost:6650"
+
+# import logging
+
+# loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+
+# print(loggers)
+# print(logging.root.manager.loggerDict)
+# input("--wait--")
 
 
 class PulsarSource(BaseSource):
@@ -42,7 +50,7 @@ class PulsarSource(BaseSource):
 
         consumer_config = self.config["consumer"]
         progress = 0
-        consumer = self.client.subscribe(consumer_config)
+        consumer = self.client.subscribe(**consumer_config)
 
         while self.running:
             message = consumer.receive()

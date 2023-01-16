@@ -8,7 +8,7 @@ from onchain.core.logger import log
 class ProtoMapper:
     def __init__(self, path_to_proto_pymodel: str, model: str) -> None:
         try:
-            self.model = getattr(import_module(path_to_proto_pymodel), model)
+            self.model = getattr(import_module(path_to_proto_pymodel), model.capitalize())
         except ModuleNotFoundError as error:
             log.error(error)
 

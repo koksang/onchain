@@ -2,7 +2,7 @@
 
 from typing import Iterable, Union
 import pulsar
-from onchain.core.sinks.base import BaseSink
+from onchain.core.base import BaseSink
 from onchain.models.mode import ExecutionMode
 from onchain.core.logger import log
 
@@ -48,7 +48,7 @@ class PulsarSink(BaseSink):
 
         producer_config = self.config["producer"]
         progress = 0
-        producer = self.client.create_producer(producer_config)
+        producer = self.client.create_producer(**producer_config)
         for item in items:
             producer.send_async(item.encode("utf-8"), callback)
             progress += 1

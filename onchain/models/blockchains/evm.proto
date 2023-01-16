@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+message Block {
+  int64 number = 1;
+  string hash = 2;
+  string parentHash = 3;
+  string nonce = 4;
+  string sha3Uncles = 5;
+  string logsBloom = 6;
+  string transactionsRoot = 7;
+  string stateRoot = 8;
+  string receiptsRoot = 9;
+  string miner = 10;
+  int64 difficulty = 11;
+  int64 totalDifficulty = 12;
+  string extraData = 13;
+  int64 size = 14;
+  int64 gasLimit = 15;
+  int64 gasUsed = 16;
+  int64 baseFeePerGas = 17;
+  int64 timestamp = 18;
+  repeated string transactions = 19;
+  repeated string uncles = 20;
+}
+
+message Transaction {
+  string blockHash = 1;
+  int64 blockNumber = 2;
+  string from = 3;
+  int64 gas = 4;
+  int64 gasPrice = 5;
+  string hash = 6;
+  string input = 7;
+  string nonce = 8;
+  string to = 9;
+  int64 transactionIndex = 10;
+  int64 value = 11;
+  int64 v = 12;
+  string r = 13;
+  string s = 14;
+}
+
+message Log {
+  bool removed = 1;
+  int64 logIndex = 2;
+  int64 transactionIndex = 3;
+  string transactionHash = 4;
+  string blockHash = 5;
+  int64 blockNumber = 6;
+  string address = 7;
+  string data = 8;
+  repeated string topics = 9;
+}
+
+message Receipt {
+  string transactionHash = 1;
+  int64 transactionIndex = 2;
+  string blockHash = 3;
+  int64 blockNumber = 4;
+  string from = 5;
+  string to = 6;
+  int64 cumulativeGasUsed = 7;
+  int64 effectiveGasPrice = 8;
+  int64 gas_used = 9;
+  string contractAddress = 10;
+  repeated Log logs = 11;
+  string logsBloom = 12;
+  string type = 13;
+  string root = 14;
+  bool status = 15;
+}
+
+message StructLog {
+  int64 pc = 1;
+  string op = 2;
+  int64 gas = 3;
+  int64 gasCost = 4;
+  int64 depth = 5;
+  string error = 6;
+  repeated string stack = 7;
+  repeated string memory = 8;
+  string storage = 9;
+  int64 refund = 10;
+}
+
+message Trace {
+  bool failed = 1;
+  int64 gas = 2;
+  string returnValue = 3;
+  repeated StructLog StructLogs = 4;
+}

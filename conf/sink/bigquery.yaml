@@ -1,0 +1,3 @@
+project: onchain-test1
+dataset: ${service.blockchain}
+table: ${service.type}
