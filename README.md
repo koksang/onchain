@@ -8,4 +8,5 @@ Exploring blockchain on-chain data ETL powering insights analysis, everything on
 - Deployment and stability test
 - DBT
 - Sunset web3.py, prioritize pure rpc api methods
+- Sunset commercial nodes, switch to self-hosted nodes
 - Support more blockchains
