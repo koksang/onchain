@@ -4,8 +4,15 @@ defaults:
   - sink: pulsar
   - mapper: evm
   - _self_
+  - override hydra/hydra_logging: disabled  
+  - override hydra/job_logging: disabled 
 mapper:
   base_path: onchain.models.blockchains
 runtime:
   start_block: 0
   end_block: 10
+
+hydra:  
+  output_subdir: null  
+  run:  
+    dir: .

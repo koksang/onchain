@@ -1,0 +1,30 @@
+ARG APP_NAME=onchain
+ARG APP_PATH=/opt/$APP_NAME
+ARG APP_USER=koksang
+ARG APP_MAINTAINER="$APP_USER <koksanggl@gmail.com>"
+ARG BASE_IMAGE=rayproject/ray:2.2.0-py310-cpu
+
+# ----------------------------------------------------
+# final image
+# ----------------------------------------------------
+FROM $BASE_IMAGE as final
+ARG APP_NAME
+ARG APP_PATH
+ARG APP_USER
+ARG APP_MAINTAINER
+
+LABEL org.opencontainers.image.authors=$APP_MAINTAINER
+ENV APP_PATH=$APP_PATH \
+    APP_NAME=$APP_NAME
+
+RUN sudo apt update -y \ 
+    && sudo apt upgrade -y \
+    && sudo apt install curl -y
+RUN echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list \
+    && curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/Release.key" | sudo apt-key add - \
+    && sudo apt update -y \
+    && sudo apt install podman -y 
+
+USER root
+RUN sudo echo '[registries.search]\nregistries=["registry.access.redhat.com", "registry.fedoraproject.org", "docker.io"]"' >> /etc/containers/registries.conf
+USER ray
