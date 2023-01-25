@@ -1,2 +1,3 @@
+type: ${service.type}
 client:
   endpoint_uri: "https://polygon-mainnet.g.alchemy.com/v2/${oc.env:API_KEY}"

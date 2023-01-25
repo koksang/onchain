@@ -3,12 +3,16 @@
 from importlib import import_module
 from google.protobuf.json_format import MessageToDict
 from onchain.core.logger import log
+from onchain.constants import BASE_PATH_PROTO_PYMODEL
 
 
 class ProtoMapper:
-    def __init__(self, path_to_proto_pymodel: str, model: str) -> None:
+    def __init__(self, proto_pymodel: str, model: str) -> None:
         try:
-            self.model = getattr(import_module(path_to_proto_pymodel), model.capitalize())
+            path_to_proto_pymodel = f"{BASE_PATH_PROTO_PYMODEL}.{proto_pymodel}"
+            self.model = getattr(
+                import_module(path_to_proto_pymodel), model.capitalize()
+            )
         except ModuleNotFoundError as error:
             log.error(error)
 

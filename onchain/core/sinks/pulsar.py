@@ -12,7 +12,7 @@ DEFAULT_PULSAR_PROXY_IP = "pulsar://localhost:6650"
 class PulsarSink(BaseSink):
     execution_mode = [ExecutionMode.stream]
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: dict, **kwargs) -> None:
         """Init
 
         Args:
@@ -41,7 +41,7 @@ class PulsarSink(BaseSink):
         """
 
         def callback(response, message_id):
-            log.debug(f"Message published: {response}")
+            log.debug(f"Message published: {response}, id: {message_id}")
 
         if not self.client:
             self.connect()

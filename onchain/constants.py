@@ -13,3 +13,6 @@ GOOGLE_APPLICATION_CREDENTIALS_B64 = os.environ.get(
 
 # sources
 SOURCE_SEND_LIMIT = 10
+
+# mapper
+BASE_PATH_PROTO_PYMODEL = "onchain.models.blockchains"

@@ -5,7 +5,7 @@ from onchain.core.base import BaseService
 from onchain.core.mappers.proto import ProtoMapper
 from onchain.core.sources.pulsar import PulsarSource
 from onchain.core.sinks.bigquery import BigQuerySink
-from onchain.core.workers.ray_streamer import RayStreamer
+from onchain.core.workers.ray import RayStreamer
 
 
 class App(BaseService):

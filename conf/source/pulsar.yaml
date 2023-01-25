@@ -3,3 +3,4 @@ client:
 consumer:
   topic: "onchain/${service.blockchain}/${service.type}"
   subscription_name: "${service.blockchain}-${service.type}-${hydra:job.id}"
+  consumer_type: shared

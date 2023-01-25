@@ -21,7 +21,7 @@ PROTO_DESCRIPTOR = descriptor_pb2.DescriptorProto()
 
 
 class BigQuerySink(BaseSink):
-    def __init__(self, config: dict, mapper: ProtoMapper) -> None:
+    def __init__(self, config: dict, mapper: ProtoMapper, **kwargs) -> None:
         """Init
 
         Args:
@@ -111,7 +111,7 @@ class BigQuerySink(BaseSink):
         yield iter([AppendRowsRequest(write_stream=stream.name, proto_rows=data)])
 
     def write(
-        self, items: Union[Iterable[str], list[str]], send_limit: int = 10
+        self, items: Union[Iterable[str], Iterable[dict]], send_limit: int = 10
     ) -> None:
         """Write using producer
 

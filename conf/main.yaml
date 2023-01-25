@@ -1,13 +1,12 @@
 defaults:
   - service: polygon
-  - source: polygon
-  - sink: pulsar
+  - source: pulsar
+  - sink: bigquery
+  - method: polygon
   - mapper: evm
   - _self_
-  - override hydra/hydra_logging: disabled  
+  - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled 
-mapper:
-  base_path: onchain.models.blockchains
 runtime:
   start_block: 0
   end_block: 10
