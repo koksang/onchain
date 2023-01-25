@@ -32,5 +32,4 @@ class App(BaseService):
         source = APISource(source_config, func=func)
         sink = PulsarSink(sink_config)
         worker = RayStreamer(source=source, sink=sink)
-
         worker.run()

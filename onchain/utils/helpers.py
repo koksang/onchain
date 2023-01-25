@@ -1,6 +1,8 @@
 """Helper functions"""
 
+import json
 import pytz
+from base64 import b64decode
 from typing import Union
 from pathlib import Path
 from dateutil.parser import parse
@@ -47,3 +49,15 @@ def get_service(config: dict):
     module = module[0]
     log.info(f"Found service: {module}.")
     return module
+
+
+def decode_b64_json_string(encoded: bytes) -> dict:
+    """Decode base64 encoded json string
+
+    Args:
+        encoded (bytes): Encoded json string, ASCII
+
+    Returns:
+        dict: Decoded json string
+    """
+    return json.loads(b64decode(encoded))

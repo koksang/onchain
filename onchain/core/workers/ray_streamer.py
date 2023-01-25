@@ -1,5 +1,6 @@
 """Ray Stream Worker"""
 
+import ray
 from onchain.core.base import BaseWorker, BaseSource, BaseSink
 
 
@@ -16,5 +17,10 @@ class RayStreamer(BaseWorker):
 
     def run(self) -> None:
         """Run worker"""
+
+        @ray.remote
+        def test():
+            pass
+
         messages = self.source.read()
         self.sink.write(messages)
