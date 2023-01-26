@@ -36,6 +36,12 @@ class BaseWorker(BaseModule):
         pass
 
 
+class BaseMethod(BaseModule):
+    @abstractmethod
+    def process(self) -> None:
+        pass
+
+
 class BaseService(ABC):
     @property
     def _name(self):

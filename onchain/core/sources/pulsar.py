@@ -2,25 +2,18 @@
 
 from typing import Iterator
 import pulsar
+from _pulsar import ConsumerType
 from onchain.core.base import BaseSource
 from onchain.models.mode import ExecutionMode
 from onchain.core.logger import log
 
 DEFAULT_PULSAR_PROXY_IP = "pulsar://localhost:6650"
 
-# import logging
-
-# loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-
-# print(loggers)
-# print(logging.root.manager.loggerDict)
-# input("--wait--")
-
 
 class PulsarSource(BaseSource):
     execution_mode = [ExecutionMode.stream]
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: dict, **kwargs) -> None:
         """Init
 
         Args:
@@ -49,6 +42,8 @@ class PulsarSource(BaseSource):
             self.connect()
 
         consumer_config = self.config["consumer"]
+        consumer_type = consumer_config.get("consumer_type", "shared").capitalize()
+        consumer_config["consumer_type"] = getattr(ConsumerType, consumer_type)
         progress = 0
         consumer = self.client.subscribe(**consumer_config)
 
@@ -60,7 +55,7 @@ class PulsarSource(BaseSource):
                 data, id = message.data().decode("utf-8"), message.message_id()
                 log.debug(f"Received message '{data}' id='{id}'")
                 yield data
-            except:
+            except Exception:
                 self.running = False
                 consumer.negative_acknowledge(message)
 

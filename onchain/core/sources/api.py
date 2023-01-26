@@ -44,8 +44,11 @@ class APISource(BaseSource):
     def read(self) -> Iterator[str]:
         """Read with function using Web3 client
 
+        Args:
+            send_limit (int): Limit to chunk the outputs
+
         Yields:
-            Iterator[str]: _description_
+            Iterator[str]: API outputs
         """
         self.running = True
         if not self.client:

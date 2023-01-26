@@ -14,12 +14,14 @@ from google.cloud.bigquery_storage import (
 from onchain.core.base import BaseSink
 from onchain.core.mappers.proto import ProtoMapper
 from onchain.core.logger import log
+from onchain.utils.helpers import decode_b64_json_string
+from onchain.constants import GOOGLE_APPLICATION_CREDENTIALS_B64
 
 PROTO_DESCRIPTOR = descriptor_pb2.DescriptorProto()
 
 
 class BigQuerySink(BaseSink):
-    def __init__(self, config: dict, mapper: ProtoMapper) -> None:
+    def __init__(self, config: dict, mapper: ProtoMapper, **kwargs) -> None:
         """Init
 
         Args:
@@ -36,8 +38,15 @@ class BigQuerySink(BaseSink):
         Args:
             reconnect (bool, optional): To reconnect the client?. Defaults to False.
         """
+        # NOTE: Temporarily supporting GOOGLE_APPLICATION_CREDENTIALS or application default
         if not (self.client and reconnect) or reconnect:
-            self.client = BigQueryWriteClient()
+            if GOOGLE_APPLICATION_CREDENTIALS_B64:
+                credentials = decode_b64_json_string(GOOGLE_APPLICATION_CREDENTIALS_B64)
+                self.client = BigQueryWriteClient(
+                    credentials=credentials, project=credentials.project_id
+                )
+            else:
+                self.client = BigQueryWriteClient()
             log.info("Connected to BigQuery client")
 
     def create_stream(self) -> WriteStream:
@@ -49,7 +58,7 @@ class BigQuerySink(BaseSink):
         client_config = self.config.get("client")
         project, dataset, table = (
             client_config["project"],
-            client_config["datasedt"],
+            client_config["dataset"],
             client_config["table"],
         )
         parent = self.client.table_path(project, dataset, table)
@@ -102,7 +111,7 @@ class BigQuerySink(BaseSink):
         yield iter([AppendRowsRequest(write_stream=stream.name, proto_rows=data)])
 
     def write(
-        self, items: Union[Iterable[str], list[str]], send_limit: int = 10
+        self, items: Union[Iterable[str], Iterable[dict]], send_limit: int = 10
     ) -> None:
         """Write using producer
 
