@@ -1,0 +1,3 @@
+project: onchain-test1
+dataset: ${method.blockchain}
+table: ${method.type}

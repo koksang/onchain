@@ -1,7 +1,5 @@
 """Service with Bigquery source, Pulsar sink"""
 
-# WIP
-
 from onchain.core.base import BaseService
 from onchain.core.sources.bigquery import BigQuerySource
 from onchain.core.sinks.pulsar import PulsarSink

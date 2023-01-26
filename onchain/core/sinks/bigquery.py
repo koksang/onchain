@@ -42,9 +42,7 @@ class BigQuerySink(BaseSink):
         if not (self.client and reconnect) or reconnect:
             if GOOGLE_APPLICATION_CREDENTIALS_B64:
                 credentials = decode_b64_json_string(GOOGLE_APPLICATION_CREDENTIALS_B64)
-                self.client = BigQueryWriteClient(
-                    credentials=credentials, project=credentials.project_id
-                )
+                self.client = BigQueryWriteClient(credentials=credentials)
             else:
                 self.client = BigQueryWriteClient()
             log.info("Connected to BigQuery client")

@@ -33,7 +33,7 @@ class PulsarSink(BaseSink):
             self.client = pulsar.Client(**client_config)
             log.info(f"Connected to pulsar client: {client_config}")
 
-    def write(self, items: Union[Iterable[str], list[str]]) -> None:
+    def write(self, items: Union[Iterable[str], Iterable[dict]]) -> None:
         """Write using producer
 
         Args:
@@ -49,6 +49,8 @@ class PulsarSink(BaseSink):
         producer_config = self.config["producer"]
         progress = 0
         producer = self.client.create_producer(**producer_config)
+
+        # TODO: convert to protobuf schema
         for item in items:
             producer.send_async(item.encode("utf-8"), callback)
             progress += 1

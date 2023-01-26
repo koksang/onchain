@@ -31,5 +31,10 @@ class App(BaseService):
         api = APIMethod(method_config)
 
         # Run worker
-        manager = RayManager(config=worker_config, source=source, sink=sink, method=api)
+        manager = RayManager(
+            config=worker_config,
+            source=source,
+            sink=sink,
+            method=api,
+        )
         manager.run(RayStreamer)
