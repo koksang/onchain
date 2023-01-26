@@ -14,3 +14,4 @@ tests
 .idea
 Thumbs.db
 *test.*
+requirements.txt
