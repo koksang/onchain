@@ -1,4 +1,4 @@
-"""Service with runtime arguments, Pulsar sink"""
+"""Service with Bigquery source, Pulsar sink"""
 
 # WIP
 
