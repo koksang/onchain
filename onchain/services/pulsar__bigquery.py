@@ -3,7 +3,6 @@
 from onchain.core.base import BaseService
 from onchain.core.sources.pulsar import PulsarSource
 from onchain.core.sinks.bigquery import BigQuerySink
-from onchain.core.methods.evm import APIMethod
 from onchain.core.workers.ray import RayManager, RayStreamer
 from onchain.core.logger import log
 
@@ -22,15 +21,17 @@ class App(BaseService):
         """Run service"""
         source_config = self.config["source"]
         sink_config = self.config["sink"]
-        method_config = self.config["method"]
         mapper_config = self.config["mapper"]
         worker_config = self.config["worker"]
 
         # Initialize objects
         source = PulsarSource(source_config)
         sink = BigQuerySink(sink_config, mapper=mapper_config)
-        api: APIMethod = APIMethod(method_config)
 
         # Run worker
-        manager = RayManager(config=worker_config, source=source, sink=sink, method=api)
+        manager = RayManager(
+            config=worker_config,
+            source=source,
+            sink=sink,
+        )
         manager.run(RayStreamer)

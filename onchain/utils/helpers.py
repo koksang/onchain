@@ -3,7 +3,7 @@
 import json
 import pytz
 from base64 import b64decode
-from typing import Union
+from typing import Union, Iterable
 from pathlib import Path
 from dateutil.parser import parse
 from datetime import datetime, timezone
@@ -63,3 +63,25 @@ def decode_b64_json_string(encoded: bytes, format: str = "utf-8") -> dict:
         dict: Decoded json string
     """
     return json.loads(b64decode(encoded).decode(format))
+
+
+def process_hydra_config(
+    config: dict,
+    compulsory_keys: Iterable[str] = ("mapper", "method", "sink", "source", "worker"),
+) -> dict:
+    """Process hydra generated config
+       - initialize key's value to None
+
+    Args:
+        config (dict): Hydra generated config
+        compulsory_keys (set, optional): Keys to match.
+            Defaults to ("mapper", "method", "sink", "source", "worker").
+
+    Returns:
+        dict: Prepared hydra config
+    """
+    keys = set([item for item in compulsory_keys if "hydra/" not in item])
+    missing_keys = keys.difference(set(config.keys()))
+    for key in missing_keys:
+        config[key] = None
+    return config

@@ -1,6 +1,6 @@
 """BigQuery Source"""
 
-from typing import Iterable, Any
+from typing import Iterable
 from google.cloud.bigquery import Client
 from onchain.core.base import BaseSource
 from onchain.core.logger import log
@@ -30,13 +30,13 @@ class BigQuerySource(BaseSource):
             if GOOGLE_APPLICATION_CREDENTIALS_B64:
                 credentials = decode_b64_json_string(GOOGLE_APPLICATION_CREDENTIALS_B64)
                 self.client = Client(
-                    credentials=credentials, project=credentials.project_id
+                    credentials=credentials, project=self.config["project"]
                 )
             else:
                 self.client = Client()
             log.info("Connected to BigQuery client")
 
-    def read(self, query: str) -> Iterable[dict[str, Any]]:
+    def read(self, query: str) -> Iterable[str]:
         """Read from Bigquery
 
         Args:
@@ -45,5 +45,6 @@ class BigQuerySource(BaseSource):
         if not self.client:
             self.connect()
 
+        # TODO: convert to protobuf schema
         for row in self.client.query(query).result():
-            yield dict(row.items())
+            yield str(dict(row.items()))
