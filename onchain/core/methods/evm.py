@@ -22,7 +22,7 @@ class Method(Enum):
 class APIMethod(BaseMethod):
     execution_mode = [ExecutionMode.stream]
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: dict, **kwargs) -> None:
         """Init
 
         Args:

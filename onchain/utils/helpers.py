@@ -52,13 +52,14 @@ def get_service(config: dict) -> str:
     return str(module)
 
 
-def decode_b64_json_string(encoded: bytes) -> dict:
+def decode_b64_json_string(encoded: bytes, format: str = "utf-8") -> dict:
     """Decode base64 encoded json string
 
     Args:
-        encoded (bytes): Encoded json string, ASCII
+        encoded (bytes): Encoded json string
+        format (str): Encoded format. Defaults to utf-8
 
     Returns:
         dict: Decoded json string
     """
-    return json.loads(b64decode(encoded))
+    return json.loads(b64decode(encoded).decode(format))

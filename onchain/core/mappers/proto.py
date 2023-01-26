@@ -7,7 +7,7 @@ from onchain.constants import BASE_PATH_PROTO_PYMODEL
 
 
 class ProtoMapper:
-    def __init__(self, proto_pymodel: str, model: str) -> None:
+    def __init__(self, proto_pymodel: str, model: str, **kwargs) -> None:
         try:
             path_to_proto_pymodel = f"{BASE_PATH_PROTO_PYMODEL}.{proto_pymodel}"
             self.model = getattr(
