@@ -56,7 +56,7 @@ def decode_b64_json_string(encoded: bytes, format: str = "utf-8") -> dict:
     """Decode base64 encoded json string
 
     Args:
-        encoded (bytes): Encoded json string
+        encoded (bytes): Encoded json string in provided format
         format (str): Encoded format. Defaults to utf-8
 
     Returns:
