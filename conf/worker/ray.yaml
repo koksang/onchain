@@ -1,0 +1,5 @@
+client:
+  address: http://localhost:8265
+options:
+  num_cpus: 0.5
+num_of_actors: 2

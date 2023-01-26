@@ -32,14 +32,6 @@ class BaseSink(BaseModule):
 
 class BaseWorker(BaseModule):
     @abstractmethod
-    def read(self) -> None:
-        pass
-
-    @abstractmethod
-    def write(self) -> None:
-        pass
-
-    @abstractmethod
     def run(self) -> None:
         pass
 

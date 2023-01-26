@@ -30,7 +30,7 @@ def timestamp_to_integer(ts: Union[datetime, str]) -> int:
     return ts_value
 
 
-def get_service(config: dict):
+def get_service(config: dict) -> str:
     """Get module file from path
 
     Args:
@@ -39,16 +39,17 @@ def get_service(config: dict):
     Returns:
         str: Filtered module absolute path
     """
-    group, source, sink = config["group"], config["source"], config["sink"]
-    path = Path(SERVICES_PATH, group)
+    source, sink = config["source"], config["sink"]
+    path = Path(SERVICES_PATH)
     search_module = f"*{source}__{sink}.py"
-    module = [str(path.absolute()) for path in path.rglob(search_module)]
+    module = [path.absolute() for path in path.rglob(search_module)]
+    log.debug(f"Found service: {module}")
     assert (
         len(module) == 1
     ), f"Found >1 module in path: {str(path)} with keywords: {search_module}"
     module = module[0]
-    log.info(f"Found service: {module}.")
-    return module
+    log.info(f"Initiating service: {module.stem}")
+    return str(module)
 
 
 def decode_b64_json_string(encoded: bytes) -> dict:

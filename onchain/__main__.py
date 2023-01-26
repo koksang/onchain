@@ -2,6 +2,7 @@
 
 from pydoc import importfile
 import hydra
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 from onchain.core.logger import log
 from onchain.utils.helpers import get_service
@@ -16,16 +17,15 @@ def main(cfg: DictConfig) -> None:
         conf (DictConfig): Parsed config that comes from hydra config_name
     """
     log.debug(OmegaConf.to_yaml(cfg))
+    hydra_choices = HydraConfig.get().runtime.choices
 
     # NOTE: retrieving configs
     resolved_config: dict = OmegaConf.to_container(cfg, resolve=True)
-    service = resolved_config["service"]
-    runtime_kwargs = resolved_config.pop("runtime")
 
     # NOTE: search and import service
-    module = get_service(service)
+    module = get_service(hydra_choices)
     module = getattr(importfile(module), "App")
-    app = module(resolved_config, **runtime_kwargs)
+    app = module(resolved_config)
 
     app.run()
 

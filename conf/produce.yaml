@@ -1,8 +1,6 @@
 defaults:
   - source: pulsar
   - sink: bigquery
-  - method: polygon
-  - mapper: evm
   - worker: ray
   - _self_
   - override hydra/hydra_logging: disabled

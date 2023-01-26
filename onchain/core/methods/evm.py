@@ -30,11 +30,12 @@ class APIMethod(BaseMethod):
             func (Callable): Defined function
         """
         self.config = config
+        self._client, self.func = None, None
         self.connect()
         self.function()
         log.info(f"Initiated {self._name} with config: {self.config}")
 
-    def connect(self, reconnect: bool = False) -> None:
+    def connect(self, reconnect: bool = False):
         """Establish client connection
 
         Args:
@@ -51,7 +52,8 @@ class APIMethod(BaseMethod):
 
     def function(self) -> None:
         """Get Web3 function"""
-        function_type = getattr(Method, self.config["type"])
+        function_type = getattr(Method, self.config["type"]).value
+        log.info(f"Retrieving API function: {function_type}")
         self.func = getattr(self._client.eth, function_type)
 
     def process(

@@ -1,2 +1,2 @@
 proto_pymodel: evm_pb2
-model: ${service.type}
+model: ${method.type}
