@@ -42,6 +42,16 @@ class BaseMethod(BaseModule):
         pass
 
 
+class BaseBuilder(BaseModule):
+    @abstractmethod
+    def get_parameters(self) -> None:
+        pass
+
+    @abstractmethod
+    def to_json(self) -> None:
+        pass
+
+
 class BaseService(ABC):
     @property
     def _name(self):

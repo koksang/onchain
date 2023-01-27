@@ -10,6 +10,7 @@ from web3 import Web3
 from web3.middleware.geth_poa import geth_poa_middleware
 from web3.datastructures import AttributeDict
 from onchain.core.base import BaseMethod
+from onchain.core.mappers.evm import EVMMapper
 from onchain.models.mode import ExecutionMode
 from onchain.core.logger import log
 
@@ -31,6 +32,7 @@ class APIMethod(BaseMethod):
         """
         self.config = config
         self._client, self.func = None, None
+        self.function_type = getattr(Method, self.config["type"]).value.lower()
         self.connect()
         self.function()
         log.info(f"Initiated {self._name} with config: {self.config}")
@@ -52,9 +54,8 @@ class APIMethod(BaseMethod):
 
     def function(self) -> None:
         """Get Web3 function"""
-        function_type = getattr(Method, self.config["type"]).value
-        log.info(f"Retrieving API function: {function_type}")
-        self.func = getattr(self._client.eth, function_type)
+        log.info(f"Retrieving API function: {self.function_type}")
+        self.func = getattr(self._client.eth, self.function_type)
 
     def process(
         self, item: Union[str, int], **kwargs
@@ -64,4 +65,5 @@ class APIMethod(BaseMethod):
         Yields:
             Iterable[Union[dict, AttributeDict]]: API output
         """
-        yield self.func(item, **kwargs)
+        map = getattr(EVMMapper, self.function_type)
+        yield map(self.func(item, **kwargs))
