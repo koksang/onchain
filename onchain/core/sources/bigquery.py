@@ -47,4 +47,4 @@ class BigQuerySource(BaseSource):
 
         # TODO: convert to protobuf schema
         for row in self.client.query(query).result():
-            yield str(dict(row.items()))
+            yield row.values()
