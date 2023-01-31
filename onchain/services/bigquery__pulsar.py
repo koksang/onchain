@@ -29,4 +29,4 @@ class App(BaseService):
 
         # Run worker
         manager = RayManager(config=worker_config, source=source, sink=sink)
-        manager.run(RayStreamer)
+        manager.run()
