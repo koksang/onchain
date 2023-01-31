@@ -4,7 +4,7 @@ from onchain.core.base import BaseService
 from onchain.core.sources.pulsar import PulsarSource
 from onchain.core.sinks.pulsar import PulsarSink
 from onchain.core.methods.evm import APIMethod
-from onchain.core.workers.ray import RayManager, RayStreamer
+from onchain.core.workers.ray import RayManager
 from onchain.core.logger import log
 
 
@@ -37,4 +37,4 @@ class App(BaseService):
             sink=sink,
             method=api,
         )
-        manager.run(RayStreamer)
+        manager.run()
