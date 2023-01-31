@@ -3,7 +3,7 @@
 from onchain.core.base import BaseService
 from onchain.core.sources.pulsar import PulsarSource
 from onchain.core.sinks.pulsar import PulsarSink
-from onchain.core.methods.evm import APIMethod
+from onchain.core.methods.evm import EVMAPIMethod
 from onchain.core.workers.ray import RayManager
 from onchain.core.logger import log
 
@@ -28,7 +28,7 @@ class App(BaseService):
         # Initialize objects
         source = PulsarSource(source_config)
         sink = PulsarSink(sink_config)
-        api = APIMethod(method_config)
+        api = EVMAPIMethod(method_config)
 
         # Run worker
         manager = RayManager(
