@@ -20,7 +20,7 @@ class Method(Enum):
     transaction = TRANSACTION = "get_transaction"
 
 
-class APIMethod(BaseMethod):
+class EVMAPIMethod(BaseMethod):
     execution_mode = [ExecutionMode.stream]
 
     def __init__(self, config: dict, **kwargs) -> None:

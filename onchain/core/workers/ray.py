@@ -21,6 +21,7 @@ class RayStreamer(BaseWorker):
             source (BaseSource): Source object
             sink (BaseSink): Sink object
             method (BaseMethod): Method object. Defaults to None
+            map (Callable): Mapper function. Defaults to None
         """
         self.source = source
         self.sink = sink

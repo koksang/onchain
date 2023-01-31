@@ -10,8 +10,7 @@ from google.cloud.bigquery_storage import (
     ProtoSchema,
     types,
 )
-from onchain.core.base import BaseSink
-from onchain.core.builder import ProtoBuilder
+from onchain.core.base import BaseSink, BaseMapper
 from onchain.core.logger import log
 from onchain.utils.helpers import decode_b64_json_string
 from onchain.constants import GOOGLE_APPLICATION_CREDENTIALS_B64
@@ -20,15 +19,15 @@ PROTO_DESCRIPTOR = descriptor_pb2.DescriptorProto()
 
 
 class BigQuerySink(BaseSink):
-    def __init__(self, config: dict, builder: ProtoBuilder, **kwargs) -> None:
+    def __init__(self, config: dict, mapper: BaseMapper, **kwargs) -> None:
         """Init
 
         Args:
             config (dict): BigQuery sink config
         """
         self.config = config
-        self.builder = builder
         self.client = None
+        self.mapper = mapper
         log.info(f"Initiated {self._name} with config: {self.config}")
 
     def connect(self, reconnect: bool = False) -> None:
@@ -52,7 +51,7 @@ class BigQuerySink(BaseSink):
         Returns:
             WriteStream: Write stream object
         """
-        client_config = self.config.get("client")
+        client_config = self.config["client"]
         project, dataset, table = (
             client_config["project"],
             client_config["dataset"],
@@ -89,7 +88,7 @@ class BigQuerySink(BaseSink):
         messages = types.ProtoRows()
         for item in items:
             messages.serialized_rows.append(
-                self.builder.to_proto(item).SerializeToString()
+                self.mapper.to_proto(item).SerializeToString()
             )
             send_count += 1
             if send_count % send_limit == 0:
@@ -119,7 +118,7 @@ class BigQuerySink(BaseSink):
             self.connect()
 
         stream = self.create_stream()
-        self.builder.model.DESCRIPTOR.CopyToProto(PROTO_DESCRIPTOR)
+        self.mapper.model.DESCRIPTOR.CopyToProto(PROTO_DESCRIPTOR)
         PROTO_SCHEMA = ProtoSchema(proto_descriptor=PROTO_DESCRIPTOR)
 
         request_generator = self._generate_requests(

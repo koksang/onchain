@@ -42,7 +42,7 @@ class BaseMethod(BaseModule):
         pass
 
 
-class BaseBuilder(BaseModule):
+class BaseMapper(BaseModule):
     @abstractmethod
     def get_parameters(self) -> None:
         pass
