@@ -3,7 +3,8 @@
 from onchain.core.base import BaseService
 from onchain.core.sources.bigquery import BigQuerySource
 from onchain.core.sinks.pulsar import PulsarSink
-from onchain.core.workers.ray import RayManager, RayStreamer
+from onchain.core.workers.ray import RayManager
+from onchain.queries.bigquery import EVMQuery
 from onchain.core.logger import log
 
 
@@ -24,7 +25,8 @@ class App(BaseService):
         worker_config = self.config["worker"]
 
         # Initialize objects
-        source = BigQuerySource(source_config)
+        query = getattr(EVMQuery, source_config["type"])
+        source = BigQuerySource(source_config, query=query)
         sink = PulsarSink(sink_config)
 
         # Run worker
