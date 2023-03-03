@@ -7,8 +7,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "==3.10.4" # matching ray-cluster deployment python version
-# jupyterlab = "^3.5.1"
+python = "==3.10.9"                                # matching ray-cluster deployment python version
 google-cloud-bigquery = "^3.3.3"
 google-cloud-bigquery-storage = "^2.16.0"
 loguru = "^0.6.0"
@@ -19,7 +18,7 @@ pytest = "^7.2.0"
 db-dtypes = "^1.0.5"
 web3 = "^5.31.0"
 protobuf = "^3.20.0"
-ray = { extras = ["default"], version = "^2.2.0" }
+ray = { extras = ["default"], version = "^2.3.0" }
 pulsar-client = "^3.0.0"
 google-api-python-client = "^2.70.0"
 
