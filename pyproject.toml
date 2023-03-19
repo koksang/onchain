@@ -21,6 +21,7 @@ protobuf = "^3.20.0"
 ray = { extras = ["default"], version = "^2.3.0" }
 pulsar-client = "^3.0.0"
 google-api-python-client = "^2.70.0"
+jupyterlab = "^3.6.1"
 
 [tool.ruff]
 line-length = 88
