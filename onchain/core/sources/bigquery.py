@@ -9,13 +9,14 @@ from onchain.constants import GOOGLE_APPLICATION_CREDENTIALS_B64
 
 
 class BigQuerySource(BaseSource):
-    def __init__(self, config: dict, **kwargs) -> None:
+    def __init__(self, config: dict, query: str, **kwargs) -> None:
         """Init
 
         Args:
             config (dict): BigQuery sink config
         """
         self.config = config
+        self.query = query
         self.client = None
         log.info(f"Initiated {self._name} with config: {self.config}")
 
@@ -36,15 +37,11 @@ class BigQuerySource(BaseSource):
                 self.client = Client()
             log.info("Connected to BigQuery client")
 
-    def read(self, query: str) -> Iterable[str]:
-        """Read from Bigquery
-
-        Args:
-            query (str): Query to compute / read
-        """
+    def read(self) -> Iterable[str]:
+        """Read from Bigquery"""
         if not self.client:
             self.connect()
 
         # TODO: convert to protobuf schema
-        for row in self.client.query(query).result():
+        for row in self.client.query(self.query).result():
             yield row.values()

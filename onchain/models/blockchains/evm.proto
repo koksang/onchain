@@ -19,25 +19,29 @@ message Block {
   int64 gas_used = 16;
   int64 base_fee_per_gas = 17;
   int64 timestamp = 18;
-  repeated string transactions = 19;
+  int64 transactions_count = 19;
   repeated string uncles = 20;
 }
 
 message Transaction {
-  string block_hash = 1;
-  int64 block_number = 2;
-  string from = 3;
-  int64 gas = 4;
-  int64 gas_price = 5;
-  string hash = 6;
+  string hash = 1;
+  int64 nonce = 2;
+  int64 transaction_index = 3;
+  string from = 4;
+  string to = 5;
+  int64 value = 6;
   string input = 7;
-  string nonce = 8;
-  string to = 9;
-  int64 transaction_index = 10;
-  int64 value = 11;
-  int64 v = 12;
-  string r = 13;
-  string s = 14;
+  string type = 8;
+  int64 gas = 9;
+  int64 gas_price = 10;
+  int64 max_fee_per_gas = 11;
+  int64 max_priority_fee_per_gas = 12;
+  int64 v = 13;
+  string r = 14;
+  string s = 15;
+  string block_hash = 16;
+  int64 block_number = 17;
+  int64 block_timestamp = 18;
 }
 
 message Log {
