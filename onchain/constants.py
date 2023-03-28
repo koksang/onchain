@@ -3,9 +3,10 @@
 import os
 from pathlib import Path
 
+
 PROJECT_PATH = str(Path(__file__).parents[1])
 SERVICES_PATH = str(Path(PROJECT_PATH, "onchain", "services"))
-CONFIG_PATH = str(Path(PROJECT_PATH, "conf"))
+CONFIG_PATH = str(Path(PROJECT_PATH, "config"))
 CONFIG_NAME = "main"
 GOOGLE_APPLICATION_CREDENTIALS_B64 = os.environ.get(
     "GOOGLE_APPLICATION_CREDENTIALS_B64", None
@@ -14,5 +15,4 @@ GOOGLE_APPLICATION_CREDENTIALS_B64 = os.environ.get(
 # sources
 SOURCE_SEND_LIMIT = 10
 
-# mapper
 BASE_PATH_PROTO_PYMODEL = "onchain.models.blockchains"

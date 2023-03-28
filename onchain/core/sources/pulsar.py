@@ -5,7 +5,7 @@ import pulsar
 from _pulsar import ConsumerType
 from onchain.core.base import BaseSource
 from onchain.models.mode import ExecutionMode
-from onchain.core.logger import log
+from onchain.logger import log
 
 DEFAULT_PULSAR_PROXY_IP = "pulsar://localhost:6650"
 

@@ -3,7 +3,7 @@
 import ray
 from typing import Iterable, Union, Type
 from onchain.core.base import BaseWorker, BaseSource, BaseSink, BaseMethod
-from onchain.core.logger import log
+from onchain.logger import log
 
 
 @ray.remote(num_cpus=0.5)

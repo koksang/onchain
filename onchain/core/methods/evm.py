@@ -12,7 +12,7 @@ from web3.datastructures import AttributeDict
 from onchain.core.base import BaseMethod
 from onchain.core.mappers.evm import EVMMapper
 from onchain.models.mode import ExecutionMode
-from onchain.core.logger import log
+from onchain.logger import log
 
 
 class Method(Enum):

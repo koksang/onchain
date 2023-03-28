@@ -11,7 +11,7 @@ from google.cloud.bigquery_storage import (
     types,
 )
 from onchain.core.base import BaseSink, BaseMapper
-from onchain.core.logger import log
+from onchain.logger import log
 from onchain.utils.helpers import decode_b64_json_string
 from onchain.constants import GOOGLE_APPLICATION_CREDENTIALS_B64
 

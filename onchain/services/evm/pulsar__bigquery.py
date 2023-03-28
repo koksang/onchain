@@ -5,7 +5,7 @@ from onchain.core.sources.pulsar import PulsarSource
 from onchain.core.sinks.bigquery import BigQuerySink
 from onchain.core.mappers.evm import EVMMapper
 from onchain.core.workers.ray import RayManager
-from onchain.core.logger import log
+from onchain.logger import log
 
 
 class App(BaseService):

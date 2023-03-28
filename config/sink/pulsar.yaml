@@ -1,4 +1,4 @@
 client:
   service_url: pulsar://localhost:6650
 producer:
-  topic: onchain/${method.blockchain}/${method.type}
+  topic: onchain/${blockchain.coin}/${blockchain.data}

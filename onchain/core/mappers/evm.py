@@ -6,7 +6,7 @@ from importlib import import_module
 from google.protobuf.json_format import MessageToDict
 from web3.datastructures import AttributeDict
 from onchain.core.base import BaseMapper
-from onchain.core.logger import log
+from onchain.logger import log
 from onchain.constants import BASE_PATH_PROTO_PYMODEL
 
 

@@ -3,7 +3,7 @@
 from typing import Iterable
 from google.cloud.bigquery import Client
 from onchain.core.base import BaseSource
-from onchain.core.logger import log
+from onchain.logger import log
 from onchain.utils.helpers import decode_b64_json_string
 from onchain.constants import GOOGLE_APPLICATION_CREDENTIALS_B64
 
