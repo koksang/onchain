@@ -4,10 +4,8 @@ import json
 import pytz
 from base64 import b64decode
 from typing import Union, Type
-from pathlib import Path
 from datetime import datetime, timezone
 from onchain.logger import log
-from onchain.constants import SERVICES_PATH
 
 
 def timestamp_to_integer(ts: Union[datetime, str]) -> int:
@@ -29,28 +27,6 @@ def timestamp_to_integer(ts: Union[datetime, str]) -> int:
     ts_value = int(delta.total_seconds()) * 1000000 + int(delta.microseconds)
     log.debug(f"Converted {ts} to {ts_value}")
     return ts_value
-
-
-def get_service(config: dict) -> str:
-    """Get module file from path
-
-    Args:
-        config (dict): Service config
-
-    Returns:
-        str: Filtered module absolute path
-    """
-    source, sink = config["source"], config["sink"]
-    path = Path(SERVICES_PATH)
-    search_module = f"*{source}__{sink}.py"
-    module = [path.absolute() for path in path.rglob(search_module)]
-    log.debug(f"Found service: {module}")
-    assert (
-        len(module) == 1
-    ), f"Found >1 module in path: {str(path)} with keywords: {search_module}"
-    module = module[0]
-    log.info(f"Initiating service: {module.stem}")
-    return str(module)
 
 
 def decode_b64_json_string(encoded: bytes, format: str = "utf-8") -> dict:

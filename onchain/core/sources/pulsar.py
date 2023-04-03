@@ -4,6 +4,7 @@ from typing import Iterator
 import pulsar
 from _pulsar import ConsumerType
 from onchain.core.base import BaseSource
+from onchain.core.schema import ProtobufBytesSchema
 from onchain.models.mode import ExecutionMode
 from onchain.logger import log
 

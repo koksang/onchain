@@ -3,6 +3,7 @@
 from typing import Iterable, Union
 import pulsar
 from onchain.core.base import BaseSink
+from onchain.core.schema import ProtobufBytesSchema
 from onchain.models.mode import ExecutionMode
 from onchain.logger import log
 
