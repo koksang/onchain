@@ -58,7 +58,7 @@ message Log {
 
 message Receipt {
   string transaction_hash = 1;
-  int64 transactionn_index = 2;
+  int64 transaction_index = 2;
   string block_hash = 3;
   int64 block_number = 4;
   string from = 5;
