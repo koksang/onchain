@@ -1,27 +1,35 @@
 """Pulsar Sink"""
 
-from typing import Iterable, Union
+from typing import Iterable
 import pulsar
-from onchain.core.base import BaseSink
-from onchain.core.schema import ProtobufBytesSchema
+from onchain.core.base import BaseConnectionModule
 from onchain.models.mode import ExecutionMode
+from onchain.utils.pulsar import get_pulsar_schema
 from onchain.logger import log
 
-DEFAULT_PULSAR_PROXY_IP = "pulsar://localhost:6650"
 
-
-class PulsarSink(BaseSink):
+class PulsarSink(BaseConnectionModule):
     execution_mode = [ExecutionMode.stream]
 
-    def __init__(self, config: dict, **kwargs) -> None:
+    def __init__(
+        self,
+        client_config: dict,
+        producer_config: dict,
+        blockchain_name: str,
+        blockchain_data: str,
+        **kwargs,
+    ) -> None:
         """Init
 
         Args:
-            config (dict): PULSAR configuration.
+            client_config (dict): Pulsar client configuration.
+            producer_config (dict): Pulsar producer configuration.
+            blockchain_name (str): Blockchain name.
+            blockchain_data (str): Blockchain data.
         """
-        self.config = config
-        self.client = None
-        log.info(f"Initiated {self._name} with config: {self.config}")
+        self._client_config = client_config
+        self._producer_config = producer_config
+        super().__init__(blockchain_name, blockchain_data)
 
     def connect(self, reconnect: bool = False) -> None:
         """Establish client connection
@@ -29,16 +37,18 @@ class PulsarSink(BaseSink):
         Args:
             reconnect (bool, optional): To reconnect the client?. Defaults to False.
         """
-        client_config = self.config["client"]
         if not (self.client and reconnect) or reconnect:
-            self.client = pulsar.Client(**client_config)
-            log.info(f"Connected to pulsar client: {client_config}")
+            self.client = pulsar.Client(**self._client_config)
+            log.info("Connected to pulsar client")
 
-    def write(self, items: Union[Iterable[str], Iterable[dict]]) -> None:
-        """Write using producer
+    def run(self, upstream_items: Iterable) -> None:
+        """Run producer
 
         Args:
-            items (Union[Iterable[str], list[str]]): Messages to write
+            upstream_items (Iterable): Upstream items
+
+        Returns:
+            GeneratedProtocolMessageType: Protobuf model object
         """
 
         def callback(response, message_id):
@@ -47,13 +57,12 @@ class PulsarSink(BaseSink):
         if not self.client:
             self.connect()
 
-        producer_config = self.config["producer"]
-        progress = 0
-        producer = self.client.create_producer(**producer_config)
+        schema = get_pulsar_schema(self.model)
+        producer = self.client.create_producer(**self._producer_config, schema=schema)
 
-        # TODO: convert to protobuf schema
-        for item in items:
-            producer.send_async(item.encode("utf-8"), callback)
+        progress = 0
+        for item in upstream_items:
+            producer.send_async(item, callback)
             progress += 1
 
         self.client.close()

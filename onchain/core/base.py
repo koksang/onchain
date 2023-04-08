@@ -1,58 +1,39 @@
 """Base module"""
 from abc import ABC, abstractmethod
+from onchain.utils.protobuf import get_protobuf_model
+from onchain.logger import log
 
 
 class BaseModule(ABC):
-    supported_modes = []
+    execution_mode = []
+
+    def __init__(self, blockchain_name: str, blockchain_data: str, **kwargs) -> None:
+        self.blockchain_name = blockchain_name
+        self.blockchain_data = blockchain_data
+        self.model = get_protobuf_model(self.blockchain_name, self.blockchain_data)
+        log.info(
+            f"Initiated {self._name}, blockhain: {self.blockchain_name}, data: {self.blockchain_data}, model: {self.model}"
+        )
 
     @property
     def _name(self):
         return self.__class__.__name__
 
+    @abstractmethod
+    def run(self):
+        pass
 
-class BaseSource(BaseModule):
+
+class BaseConnectionModule(BaseModule):
+    client = None
+    running = None
+
     @abstractmethod
     def connect(self):
         pass
 
-    @abstractmethod
-    def read(self):
-        pass
 
-
-class BaseSink(BaseModule):
-    @abstractmethod
-    def connect(self) -> object:
-        pass
-
-    @abstractmethod
-    def write(self) -> None:
-        pass
-
-
-class BaseWorker(BaseModule):
-    @abstractmethod
-    def run(self) -> None:
-        pass
-
-
-class BaseMethod(BaseModule):
-    @abstractmethod
-    def process(self) -> None:
-        pass
-
-
-class BaseMapper(BaseModule):
-    @abstractmethod
-    def get_parameters(self) -> None:
-        pass
-
-    @abstractmethod
-    def to_json(self) -> None:
-        pass
-
-
-class BaseService(ABC):
+class BaseService(BaseModule):
     @property
     def _name(self):
         return self.__class__.__module__

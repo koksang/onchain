@@ -2,9 +2,11 @@
 
 import json
 import pytz
+from importlib import import_module
 from base64 import b64decode
 from typing import Union, Type
 from datetime import datetime, timezone
+from onchain.constants import BASE_PATH_PROTO_PYMODEL
 from onchain.logger import log
 
 

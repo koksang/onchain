@@ -3,7 +3,7 @@
 
 from google.protobuf.descriptor_pb2 import DescriptorProto
 from onchain.core.schema import ProtobufBytesSchema
-from onchain.models.blockchains.evm import Log
+from onchain.models.blockchains.evm_pb2 import Log
 
 
 if __name__ == "__main__":

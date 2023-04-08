@@ -16,3 +16,4 @@ GOOGLE_APPLICATION_CREDENTIALS_B64 = os.environ.get(
 SOURCE_SEND_LIMIT = 10
 
 BASE_PATH_PROTO_PYMODEL = "onchain.models.blockchains"
+DEFAULT_PULSAR_PROXY_IP = "pulsar://localhost:6650"
