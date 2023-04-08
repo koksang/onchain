@@ -1,2 +1,0 @@
-pymodel: evm_pb2
-model: ${method.type}

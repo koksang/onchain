@@ -1,24 +1,33 @@
 """BigQuery Source"""
 
-from typing import Iterable
+from typing import Iterable, Union
 from google.cloud.bigquery import Client
-from onchain.core.base import BaseSource
-from onchain.core.logger import log
+from onchain.core.base import BaseConnectionModule
 from onchain.utils.helpers import decode_b64_json_string
+from onchain.logger import log
 from onchain.constants import GOOGLE_APPLICATION_CREDENTIALS_B64
 
 
-class BigQuerySource(BaseSource):
-    def __init__(self, config: dict, query: str, **kwargs) -> None:
+class BigQuerySource(BaseConnectionModule):
+    def __init__(
+        self,
+        client_config: dict,
+        blockchain_name: str,
+        blockchain_data: str,
+        dbt_model: Union[str, None] = None,
+        **kwargs,
+    ) -> None:
         """Init
 
         Args:
-            config (dict): BigQuery sink config
+            client_config (dict): BigQuery client configuration.
+            blockchain_name (str): Blockchain name.
+            blockchain_data (str): Blockchain data.
+            dbt_model (str): Blockchain dbt model to run.
         """
-        self.config = config
-        self.query = query
-        self.client = None
-        log.info(f"Initiated {self._name} with config: {self.config}")
+        self._client_config = client_config
+        self.dbt_model = dbt_model
+        super().__init__(blockchain_name, blockchain_data)
 
     def connect(self, reconnect: bool = False) -> None:
         """Establish client connection
@@ -31,17 +40,17 @@ class BigQuerySource(BaseSource):
             if GOOGLE_APPLICATION_CREDENTIALS_B64:
                 credentials = decode_b64_json_string(GOOGLE_APPLICATION_CREDENTIALS_B64)
                 self.client = Client(
-                    credentials=credentials, project=self.config["project"]
+                    credentials=credentials, project=self._client_config["project"]
                 )
             else:
                 self.client = Client()
             log.info("Connected to BigQuery client")
 
-    def read(self) -> Iterable[str]:
+    def run(self) -> Iterable[str]:
         """Read from Bigquery"""
         if not self.client:
             self.connect()
 
         # TODO: convert to protobuf schema
-        for row in self.client.query(self.query).result():
+        for row in self.client.query(self.dbt_model).result():
             yield row.values()

@@ -3,26 +3,35 @@
 from typing import Iterator
 import pulsar
 from _pulsar import ConsumerType
-from onchain.core.base import BaseSource
+from google.protobuf.pyext.cpp_message import GeneratedProtocolMessageType
+from onchain.core.base import BaseConnectionModule
 from onchain.models.mode import ExecutionMode
-from onchain.core.logger import log
+from onchain.utils.pulsar import get_pulsar_schema
+from onchain.logger import log
 
-DEFAULT_PULSAR_PROXY_IP = "pulsar://localhost:6650"
 
-
-class PulsarSource(BaseSource):
+class PulsarSource(BaseConnectionModule):
     execution_mode = [ExecutionMode.stream]
 
-    def __init__(self, config: dict, **kwargs) -> None:
+    def __init__(
+        self,
+        client_config: dict,
+        consumer_config: dict,
+        blockchain_name: str,
+        blockchain_data: str,
+        **kwargs,
+    ) -> None:
         """Init
 
         Args:
-            config (dict): PULSAR configuration.
+            client_config (dict): Pulsar client configuration.
+            consumer_config (dict): Pulsar consumer configuration.
+            blockchain_name (str): Blockchain name.
+            blockchain_data (str): Blockchain data.
         """
-        self.config = config
-        self.client = None
-        self.running = None
-        log.info(f"Initiated {self._name} with config: {self.config}")
+        self._client_config = client_config
+        self._consumer_config = consumer_config
+        super().__init__(blockchain_name, blockchain_data)
 
     def connect(self, reconnect: bool = False) -> None:
         """Establish client connection
@@ -30,30 +39,31 @@ class PulsarSource(BaseSource):
         Args:
             reconnect (bool, optional): To reconnect the client?. Defaults to False.
         """
-        client_config = self.config["client"]
         if not (self.client and reconnect) or reconnect:
-            self.client = pulsar.Client(**client_config)
-            log.info(f"Connected to pulsar client: {client_config}")
+            self.client = pulsar.Client(**self._client_config)
+            log.info("Connected to pulsar client")
 
-    def read(self) -> Iterator[str]:
-        """Read from consumer"""
+    def run(self) -> Iterator[GeneratedProtocolMessageType]:
+        """Run consumer"""
         self.running = True
         if not self.client:
             self.connect()
 
-        consumer_config = self.config["consumer"]
-        consumer_type = consumer_config.get("consumer_type", "shared").capitalize()
-        consumer_config["consumer_type"] = getattr(ConsumerType, consumer_type)
-        progress = 0
-        consumer = self.client.subscribe(**consumer_config)
+        consumer_type = self._consumer_config.get(
+            "consumer_type", "shared"
+        ).capitalize()
+        self._consumer_config["consumer_type"] = getattr(ConsumerType, consumer_type)
+        schema = get_pulsar_schema(self.model)
+        consumer = self.client.subscribe(**self._consumer_config, schema=schema)
 
+        progress = 0
         while self.running:
             message = consumer.receive()
             try:
                 consumer.acknowledge(message)
                 progress += 1
                 data, id = message.data().decode("utf-8"), message.message_id()
-                log.debug(f"Received message '{data}' id='{id}'")
+                log.debug(f"Received message '{data}', id={id}")
                 yield data
             except Exception:
                 self.running = False

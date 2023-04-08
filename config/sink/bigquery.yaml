@@ -1,0 +1,4 @@
+client:
+  project: onchain-test1
+  dataset: ${blockchain.coin}
+  table: ${blockchain.data}

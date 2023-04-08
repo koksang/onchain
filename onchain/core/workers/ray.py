@@ -1,76 +1,46 @@
 """Ray Stream Worker"""
 
 import ray
-from typing import Iterable, Union, Type
-from onchain.core.base import BaseWorker, BaseSource, BaseSink, BaseMethod
-from onchain.core.logger import log
+from typing import Union, Type, Callable
+from onchain.core.base import BaseModule
+from onchain.logger import log
 
 
 @ray.remote(num_cpus=0.5)
-class RayStreamer(BaseWorker):
-    def __init__(
-        self,
-        source: Type[BaseSource],
-        sink: Type[BaseSink],
-        method: Union[Type[BaseMethod], None] = None,
-        **kwargs,
-    ) -> None:
+class RayStreamer(BaseModule):
+    def __init__(self, process: Callable, **kwargs) -> None:
         """Init
 
         Args:
-            source (BaseSource): Source object
-            sink (BaseSink): Sink object
-            method (BaseMethod): Method object. Defaults to None
+            process (Callable): Process to send to ray workers
         """
-        self.source = source
-        self.sink = sink
-        self.method = method
+        self.process = process
         log.info(f"Initiated {self._name}")
 
     def run(self) -> None:
         """Run worker"""
-
-        def transform() -> Iterable:
-            """Transform source messages with method process"""
-            for message in self.source.read():
-                yield self.method.process(message)
-
-        if self.method:
-            log.info("Source -> Transform -> Sink")
-            messages = self.transform()
-
-        else:
-            log.info("Source -> Sink")
-            messages = self.source.read()
-
-        self.sink.write(messages)
+        self.process()
 
 
-class RayManager(BaseWorker):
+class RayManager(BaseModule):
     def __init__(
         self,
         config: dict,
-        source: Type[BaseSource],
-        sink: Type[BaseSink],
-        method: Union[Type[BaseMethod], None] = None,
+        process: Callable,
         **kwargs,
     ) -> None:
         """Init
 
         Args:
             config (dict): Ray Manager config
-            source (BaseSource): Source object
-            sink (BaseSink): Sink object
-            method (BaseMethod): Method object. Defaults to None
+            process (Callable): Process to send to ray workers
         """
-        self.source = source
-        self.sink = sink
-        self.method = method
         self.config = config
+        self.process = process
         log.info(f"Initiated {self._name}")
 
     def run(
-        self, ray_worker: Union[Type[BaseWorker], RayStreamer] = RayStreamer
+        self, ray_worker: Union[Type[BaseModule], RayStreamer] = RayStreamer
     ) -> None:
         """Run ray manager
 
@@ -83,9 +53,7 @@ class RayManager(BaseWorker):
         try:
             ray.init()
             actors = [
-                ray_worker.options(**options_config).remote(
-                    source=self.source, sink=self.sink, method=self.method
-                )
+                ray_worker.options(**options_config).remote(process=self.process)
                 for _ in range(num_of_actors)
             ]
             result_ids = [actor.run.remote() for actor in actors]

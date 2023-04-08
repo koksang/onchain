@@ -18,10 +18,12 @@ pytest = "^7.2.0"
 db-dtypes = "^1.0.5"
 web3 = "^5.31.0"
 protobuf = "^3.20.0"
-ray = { extras = ["default"], version = "^2.3.0" }
+ray = { extras = ["default"], version = "^2.3.1" }
 pulsar-client = "^3.1.0"
 google-api-python-client = "^2.70.0"
 jupyterlab = "^3.6.1"
+pydantic = "^1.10.7"
+fastavro = "^1.7.3"
 
 [tool.ruff]
 line-length = 88

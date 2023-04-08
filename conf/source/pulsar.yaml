@@ -1,6 +1,0 @@
-client:
-  service_url: pulsar://localhost:6650
-consumer:
-  topic: "onchain/${method.blockchain}/${method.type}"
-  subscription_name: "${method.blockchain}-${method.type}-${hydra:job.id}"
-  consumer_type: shared
