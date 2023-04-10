@@ -6,6 +6,7 @@ notebooks
 __pycache__
 outputs
 tests
+logs
 
 # files
 .csv

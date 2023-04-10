@@ -21,9 +21,8 @@ protobuf = "^3.20.0"
 ray = { extras = ["default"], version = "^2.3.1" }
 pulsar-client = "^3.1.0"
 google-api-python-client = "^2.70.0"
-jupyterlab = "^3.6.1"
 pydantic = "^1.10.7"
-fastavro = "^1.7.3"
+dbt-bigquery = "^1.4.3"
 
 [tool.ruff]
 line-length = 88

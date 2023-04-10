@@ -1,0 +1,17 @@
+defaults: &defaults
+  job_execution_timeout_seconds: 300
+  job_retries: 1
+  keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS', '~/onchain-platform.json') }}"
+  location: US
+  method: service-account
+  priority: interactive
+  project: "{{ env_var('GOOGLE_PROJECT_ID', 'onchain-platform') }}"
+  threads: 4
+  type: bigquery
+
+onchain:
+  outputs:
+    onchain-app:
+      <<: *defaults
+      dataset: default
+  target: default
