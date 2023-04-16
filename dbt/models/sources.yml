@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: ethereum
+    database: "{{ env_var('GOOGLE_PROJECT_ID') }}"
+    schema: raw
+
+    tables:
+      - name: blocks
+      - name: transactions
+
+  - name: polygon
+    database: "{{ env_var('GOOGLE_PROJECT_ID') }}"
+    schema: polygon
+
+    tables:
+      - name: blocks
+      - name: transactions

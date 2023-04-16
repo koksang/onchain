@@ -1,11 +1,12 @@
 # folders
 test
-# folders
+.env
 notebooks
 .ipynb_checkpoints
 __pycache__
 outputs
 tests
+logs
 
 # files
 .csv
