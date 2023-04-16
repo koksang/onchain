@@ -1,6 +1,6 @@
 # folders
 test
-# folders
+.env
 notebooks
 .ipynb_checkpoints
 __pycache__
