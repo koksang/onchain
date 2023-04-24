@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: ethereum
-    database: "{{ env_var('GOOGLE_PROJECT_ID') }}"
+    database: "{{ env_var('GOOGLE_PROJECT_ID', 'onchain-platform') }}"
     schema: raw
 
     tables:
@@ -10,7 +10,7 @@ sources:
       - name: transactions
 
   - name: polygon
-    database: "{{ env_var('GOOGLE_PROJECT_ID') }}"
+    database: "{{ env_var('GOOGLE_PROJECT_ID', 'onchain-platform') }}"
     schema: polygon
 
     tables:

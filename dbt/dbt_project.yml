@@ -36,16 +36,20 @@ models:
     # Config indicated by + and applies to all files under models/example/
     polygon:
       +materialized: view
+      +schema: polygon
       +tags: ["polygon", "evm"]
 
     ethereum:
       +materialized: view
+      +schema: ethereum
       +tags: ["ethereum", "evm"]
 
     bnb:
       +materialized: view
+      +schema: bnb
       +tags: ["bnb", "evm"]
 
     cardano:
       +materialized: view
+      +schema: cardano
       +tags: ["cardano", "eutxo"]
