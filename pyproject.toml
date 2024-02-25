@@ -1,3 +1,12 @@
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "semver"
+
 [tool.poetry]
 name = "onchain"
 version = "0.1.0"
@@ -7,31 +16,65 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "==3.10.9"                                # matching ray-cluster deployment python version
-google-cloud-bigquery = "^3.3.3"
-google-cloud-bigquery-storage = "^2.16.0"
-loguru = "^0.6.0"
-tqdm = "^4.64.1"
-hydra-core = "^1.3.0"
+python = "^3.11.8,<3.12"
+loguru = "^0.7.2"
+tqdm = "^4.66.2"
+hydra-core = "^1.3.2"
 pathlib = "^1.0.1"
-pytest = "^7.2.0"
-db-dtypes = "^1.0.5"
-web3 = "^5.31.0"
-protobuf = "^3.20.0"
-ray = { extras = ["default"], version = "^2.3.1" }
-pulsar-client = "^3.1.0"
-google-api-python-client = "^2.70.0"
-pydantic = "^1.10.7"
-dbt-bigquery = "^1.4.3"
+pytest = "^8.0.2"
+db-dtypes = "^1.2.0"
+protobuf = "^4.25.3"
+ray = { extras = ["default", "data"], version = "^2.9.3" }
+pulsar-client = "^3.4.0"
+pydantic = "^2.6.2"
+web3 = "^6.15.1"
+dbt-bigquery = "^1.7.6"
+google-cloud-bigquery = "^3.17.2"
+google-cloud-bigquery-storage = "^2.24.0"
+google-api-python-client = "^2.119.0"
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "^4.1.2"
+ipykernel = "^6.29.2"
 
 [tool.ruff]
-line-length = 88
-
-# Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F"]
-ignore = []
-
-# Exclude a variety of commonly ignored directories.
+line-length = 100
+select = [
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "D",   # pydocstyle
+    "E",   # Error
+    "F",   # pyflakes
+    "I",   # isort
+    "ISC", # flake8-implicit-str-concat
+    "N",   # pep8-naming
+    "PGH", # pygrep-hooks
+    "PTH", # flake8-use-pathlib
+    "Q",   # flake8-quotes
+    "S",   # bandit
+    "SIM", # flake8-simplify
+    "TRY", # tryceratops
+    "UP",  # pyupgrade
+    "W",   # Warning
+    "YTT", # flake8-2020
+]
+ignore = [
+    "B905",   # zip strict=True; remove once python <3.10 support is dropped.
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D200",
+    "D401",
+    "E402",
+    "E501",
+    "F401",
+    "TRY003", # Avoid specifying messages outside exception class; overly strict, especially for ValueError
+]
 exclude = [
     ".bzr",
     ".direnv",
@@ -51,21 +94,53 @@ exclude = [
     "build",
     "dist",
     "node_modules",
+    ".env",
+    ".venv",
+    "env",
     "venv",
+    "__pycache__",
+    ".ipynb_checkpoints",
+    "manage.py",
+    "settings.py",
 ]
-per-file-ignores = {}
-
-# Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+target-version = "py311"
 
-# Assume Python 3.10.
-target-version = "py310"
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = ["chr", "typer.Argument", "typer.Option"]
+
+[tool.ruff.pydocstyle]
+convention = "google"
 
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
 
+# Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["E402"]
+"path/to/file.py" = ["E402"]
+"**/{tests,docs,tools}/*" = ["E402"]
+"tests/*.py" = [
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "S101",   # use of "assert"
+    "S102",   # use of "exec"
+    "S106",   # possible hardcoded password.
+    "PGH001", # use of "eval"
+]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.ruff.pep8-naming]
+staticmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
+
+[tool.ruff.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.codespell]
+skip = 'poetry.lock,'
