@@ -1,6 +1,7 @@
 # folders
 test
 .env
+.venv
 notebooks
 .ipynb_checkpoints
 __pycache__
