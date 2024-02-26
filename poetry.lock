@@ -2865,6 +2865,21 @@ files = [
 ]
 
 [[package]]
+name = "nats-py"
+version = "2.7.0"
+description = "NATS client for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "nats-py-2.7.0.tar.gz", hash = "sha256:d435bf36a76f8ad00fc63de9d4148c18f187bb45a9a8bcba7f487c12f9c96fcd"},
+]
+
+[package.extras]
+aiohttp = ["aiohttp"]
+fast-parse = ["fast-mail-parser"]
+nkeys = ["nkeys"]
+
+[[package]]
 name = "nbclient"
 version = "0.9.0"
 description = "A client library for executing notebooks. Formerly nbconvert's ExecutePreprocessor."
@@ -5030,4 +5045,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11.8,<3.12"
-content-hash = "bb8c156837db29920eaaae27664fe907b7b9abdde3c460d38b7b06b4bea8edf2"
+content-hash = "43cd32a100d9ec4da5415af8a2b9c1ab2366e8a308b9239486466ee41a3d8952"
