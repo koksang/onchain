@@ -1,0 +1,172 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-path-pv
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-path
+  local:
+    path: /data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+              - k3d-main-agent-0
+              - k3d-main-agent-1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local-path-pvc
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-configmap
+data:
+  storage.xml: |
+    <clickhouse>
+        <listen_host>0.0.0.0</listen_host>
+        <path>/data/clickhouse/</path>
+        <user_directories>
+            <local_directory>
+                <path>/data/</path>
+            </local_directory>
+        </user_directories>
+        <prometheus>
+            <endpoint>/metrics</endpoint>
+            <port>9363</port>
+            <metrics>true</metrics>
+            <events>true</events>
+            <asynchronous_metrics>true</asynchronous_metrics>
+        </prometheus>
+    </clickhouse>
+  access_management.xml: | 
+    <clickhouse>
+      <users>
+        <default>
+          <access_management>1</access_management>
+          <named_collection_control>1</named_collection_control>
+          <show_named_collections>1</show_named_collections>
+          <show_named_collections_secrets>1</show_named_collections_secrets>
+          <double_sha1_passwords>1</double_sha1_passwords>
+        </default>
+      </users>
+    </clickhouse>
+  users.xml: |
+    <?xml version="1.0"?>
+    <clickhouse>
+        <profiles>
+            <default><max_memory_usage>5000000000</max_memory_usage>
+                <load_balancing>random</load_balancing>
+            </default>
+            <readonly>
+                <readonly>1</readonly>
+            </readonly>
+        </profiles>
+        <users> 
+          <default>
+              <password>default</password>
+              <networks>
+                  <ip>::/0</ip>
+              </networks>
+              <profile>default</profile>
+              <quota>default</quota>
+          </default>
+        </users>
+        <quotas>
+            <default>
+                <interval>
+                    <duration>3600</duration>
+                    <queries>0</queries>
+                    <errors>0</errors>
+                    <result_rows>0</result_rows>
+                    <read_rows>0</read_rows>
+                    <execution_time>0</execution_time>
+                </interval>
+            </default>
+        </quotas>
+    </clickhouse>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clickhouse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+    spec:
+      volumes:
+        - name: clickhouse-userconfigmap
+          configMap:
+            name: clickhouse-configmap
+        - name: clickhouse-storage
+          persistentVolumeClaim:
+            claimName: local-path-pvc
+      containers:
+      - name: clickhouse
+        image: clickhouse/clickhouse-server:24.1.6.52-alpine
+        # command: ["sleep","infinity"]
+        ports:
+        - containerPort: 8123
+        - containerPort: 9000
+        resources:
+          limits:
+            cpu: 1
+            memory: 6Gi
+          requests:
+            cpu: 500m
+            memory: 4Gi
+        volumeMounts:
+            - name: clickhouse-userconfigmap
+              mountPath: /etc/clickhouse-server/users.xml
+              subPath: users.xml
+            - name: clickhouse-userconfigmap
+              mountPath: /etc/clickhouse-server/users.d/default.xml
+              subPath: access_management.xml
+            - name: clickhouse-userconfigmap
+              mountPath: /etc/clickhouse-server/config.d/default_config.xml
+              subPath: storage.xml
+            - name: clickhouse-storage
+              mountPath: /data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse
+spec:
+  selector:
+    app: clickhouse
+  type: 
+  ports:
+  - port: 80
+    targetPort: 9000
+    protocol: TCP
+    name: http
