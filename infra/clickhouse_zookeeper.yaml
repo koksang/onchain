@@ -1,0 +1,339 @@
+---
+# Source: clickhouse/templates/configd.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-configd
+  labels:
+    app: clickhouse-configd
+data:
+  remote_servers.xml: |-
+    <yandex>
+      <remote_servers incl="clickhouse_remote_servers">
+        <clicks_cluster>
+          <shard>
+            <internal_replication>true</internal_replication>
+            
+            <replica>
+                <default_database>default</default_database>
+                <host>clickhouse-0.clickhouse.default.svc.cluster.local</host>
+                <port>9000</port>
+            </replica>
+            
+            <replica>
+                <default_database>default</default_database>
+                <host>clickhouse-1.clickhouse.default.svc.cluster.local</host>
+                <port>9000</port>
+            </replica>
+            
+          </shard>
+        </clicks_cluster>
+      </remote_servers>
+    </yandex>
+  zookeeper.xml: |-
+    <yandex>
+      <zookeeper incl="zookeeper-servers">
+      
+        <node>
+            <host>zk-0.zk.default.svc.cluster.local</host>
+            <port>2181</port>
+        </node>
+      
+        <node>
+            <host>zk-1.zk.default.svc.cluster.local</host>
+            <port>2181</port>
+        </node>
+      
+      </zookeeper>
+    </yandex>
+  graphite.xml: |-
+    <yandex>
+      
+    </yandex>
+  users.xml: |-
+    <yandex>
+      <profiles>
+        <writer>
+          <max_memory_usage>10000000000</max_memory_usage>
+          <use_uncompressed_cache>0</use_uncompressed_cache>
+          <load_balancing>random</load_balancing>
+        </writer>
+        <reader>
+          <max_memory_usage>10000000000</max_memory_usage>
+          <use_uncompressed_cache>0</use_uncompressed_cache>
+          <load_balancing>random</load_balancing>
+          <readonly>1</readonly>
+        </reader>
+      </profiles>
+      <users>
+        <writer>
+          <password>2c82mirS</password>
+          <profile>writer</profile>
+          <quota>default</quota>
+          <networks>
+            <ip>::/0</ip>
+          </networks>
+        </writer>
+        <reader>
+          <password>gFzFTUQ9</password>
+          <profile>reader</profile>
+          <quota>default</quota>
+          <allow_databases>
+            <database>default</database>
+            <database>system</database>
+          </allow_databases>
+          <networks>
+            <ip>::/0</ip>
+          </networks>
+        </reader>
+      </users>
+      <quotas>
+        <default>
+          <interval>
+            <duration>3600</duration>
+            <queries>0</queries>
+            <errors>0</errors>
+            <result_rows>0</result_rows>
+            <read_rows>0</read_rows>
+            <execution_time>0</execution_time>
+          </interval>
+        </default>
+      </quotas>
+    </yandex>
+---
+# Source: clickhouse/templates/client.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-client
+  labels:
+    name: clickhouse-client
+spec:
+  clusterIP: None
+  selector:
+    app: clickhouse-client
+---
+# Source: clickhouse/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse
+  labels:
+    app: clickhouse
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    name: rpc
+  - port: 8123
+    name: rest
+  - port: 9009
+    name: interserver
+  clusterIP: None
+  selector:
+    app: clickhouse
+---
+# Source: clickhouse/templates/zookeeper.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: zk
+spec:
+  type: ClusterIP
+  ports:
+  - port: 2888
+    name: server
+  - port: 3888
+    name: leader-election
+  clusterIP: None
+  selector:
+    app: zk
+---
+# Source: clickhouse/templates/client.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clickhouse-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse-client
+  template:
+    metadata:
+      labels:
+        app: clickhouse-client
+    spec:
+      containers:
+        - name: clickhouse-client
+          image: yandex/clickhouse-client:latest
+          command: ["sleep"]
+          args: ["infinity"]
+          resources:
+            limits:
+              cpu: 25m
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 64Mi
+---
+# Source: clickhouse/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+spec:
+  replicas: 2
+  serviceName: clickhouse
+  selector:
+    matchLabels:
+      app: clickhouse
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      volumes:
+        - name: clickhouse-configd
+          configMap:
+            name: clickhouse-configd
+      containers:
+        - name: clickhouse-server
+          image: "pltvs/clickhouse-server:latest"
+          imagePullPolicy: Always
+          terminationMessagePath: "/var/log/clickhouse-server/clickhouse-server.err.log"
+          ports:
+          - name: rpc
+            containerPort: 9000
+            protocol: TCP
+          - name: rest
+            containerPort: 8123
+            protocol: TCP
+          - name: interserver
+            containerPort: 9009
+            protocol: TCP
+          volumeMounts:
+          - name: clickhouse-data
+            mountPath: /var/lib/clickhouse
+          - name: clickhouse-configd
+            mountPath: /etc/clickhouse-server/config.d/remote_servers.xml
+            subPath: remote_servers.xml
+          - name: clickhouse-configd
+            mountPath: /etc/clickhouse-server/config.d/zookeeper.xml
+            subPath: zookeeper.xml
+          - name: clickhouse-configd
+            mountPath: /etc/clickhouse-server/config.d/graphite.xml
+            subPath: graphite.xml
+          - name: clickhouse-configd
+            mountPath: /etc/clickhouse-server/users.d
+          resources:
+            limits:
+              cpu: 125m
+              memory: 256Mi
+            requests:
+              cpu: 125m
+              memory: 256Mi
+
+  volumeClaimTemplates:
+  - metadata:
+      name: clickhouse-data
+    spec:
+      accessModes:
+        - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: 1Gi
+---
+# Source: clickhouse/templates/zookeeper.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zk
+spec:
+  serviceName: zk
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zk
+  template:
+    metadata:
+      labels:
+        app: zk
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      containers:
+      - name: k8szk
+        imagePullPolicy: Always
+        image: "gcr.io/google_samples/k8szk:v1"
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: server
+        - containerPort: 3888
+          name: leader-election
+        env:
+        - name : ZK_ENSEMBLE
+          value: "zk-0;zk-1;"
+        - name : ZK_HEAP_SIZE
+          value: "512M"
+        - name : ZK_TICK_TIME
+          value: "2000"
+        - name : ZK_INIT_LIMIT
+          value: "10"
+        - name : ZK_SYNC_LIMIT
+          value: "5"
+        - name : ZK_MAX_CLIENT_CNXNS
+          value: "60"
+        - name: ZK_SNAP_RETAIN_COUNT
+          value: "30"
+        - name: ZK_PURGE_INTERVAL
+          value: "1"
+        - name: ZK_CLIENT_PORT
+          value: "2181"
+        - name: ZK_SERVER_PORT
+          value: "2888"
+        - name: ZK_ELECTION_PORT
+          value: "3888"
+        command:
+        - sh
+        - -c
+        - zkGenConfig.sh && zkServer.sh start-foreground
+        readinessProbe:
+          exec:
+            command:
+            - "zkOk.sh"
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - "zkOk.sh"
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: zookeeper-data
+          mountPath: /var/lib/zookeeper
+        resources:
+            limits:
+              cpu: 125m
+              memory: 256Mi
+            requests:
+              cpu: 125m
+              memory: 256Mi
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 1000
+
+  volumeClaimTemplates:
+  - metadata:
+      name: zookeeper-data
+    spec:
+      accessModes:
+        - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: 1Gi
