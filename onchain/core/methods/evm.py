@@ -4,21 +4,24 @@
 # TODO: Only fully build this once converted everything into plain API calls
 # WIP
 
-from typing import Iterable, Union
-from web3 import Web3
-from web3.middleware.geth_poa import geth_poa_middleware
-from web3.datastructures import AttributeDict
+from collections.abc import Iterable
+from typing import Union
+
 from google.protobuf.pyext.cpp_message import GeneratedProtocolMessageType
+from web3 import Web3
+from web3.datastructures import AttributeDict
+from web3.middleware.geth_poa import geth_poa_middleware
+
 from onchain.core.base import BaseConnectionModule
+from onchain.logger import log
 from onchain.models.blockchains.evm_pb2 import (
     Block,
-    Transaction,
     Log,
     Receipt,
     Trace,
+    Transaction,
 )
 from onchain.models.mode import ExecutionMode
-from onchain.logger import log
 
 
 class EVMAPIMethod(BaseConnectionModule):
@@ -55,7 +58,7 @@ class EVMAPIMethod(BaseConnectionModule):
             ), f"Failed to connect to web3 client: {self._client_config}"
             log.info("Connected to web3 client")
 
-    def block(self, input: Union[str, int]) -> GeneratedProtocolMessageType:
+    def block(self, input: str | int) -> GeneratedProtocolMessageType:
         """Get block
 
         Args:
@@ -84,11 +87,11 @@ class EVMAPIMethod(BaseConnectionModule):
             gas_used=data.gasUsed,
             base_fee_per_gas=data.get("baseFeePerGas", None),
             timestamp=data.timestamp,
-            transactions=list(map(lambda item: item.hex(), data.transactions)),
-            uncles=list(map(lambda item: item.hex(), data.uncles)),
+            transactions=[item.hex() for item in data.transactions],
+            uncles=[item.hex() for item in data.uncles],
         )
 
-    def transaction(self, input: Union[str, int]) -> GeneratedProtocolMessageType:
+    def transaction(self, input: str | int) -> GeneratedProtocolMessageType:
         """Get transaction
 
         Args:

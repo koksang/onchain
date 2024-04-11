@@ -97,6 +97,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: clickhouse
+  namespace: onchain
 spec:
   replicas: 1
   selector:
@@ -171,3 +172,19 @@ spec:
       targetPort: 8443
       protocol: TCP
       name: https-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-external
+  namespace: onchain
+spec:
+  selector:
+    app: clickhouse
+  type: NodePort
+  ports:
+    - port: 8123
+      targetPort: 8123
+      protocol: TCP
+      nodePort: 31000
+      name: http-nodeport-non-tls

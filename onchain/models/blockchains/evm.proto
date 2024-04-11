@@ -1,4 +1,5 @@
 syntax = "proto3";
+package evm;
 
 message Block {
   int64 number = 1;

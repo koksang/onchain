@@ -1,0 +1,256 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: main
+  namespace: onchain
+  labels:
+    strimzi.io/cluster: onchain
+spec:
+  replicas: 2
+  roles: # (1)
+    - controller
+    - broker
+  storage: # (2)
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 30Gi
+        deleteClaim: false
+  # template:
+  #   pod:
+  #     affinity:
+  #       podAntiAffinity: # (3)
+  #         requiredDuringSchedulingIgnoredDuringExecution:
+  #           - labelSelector:
+  #               matchExpressions:
+  #                 - key: strimzi.io/name
+  #                   operator: In
+  #                   values:
+  #                     - onchain-kafka
+  #             topologyKey: "kubernetes.io/hostname" # (4)
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: onchain
+  namespace: onchain
+  annotations: # (1)
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
+spec:
+  kafka:
+    config:
+      offsets.topic.replication.factor: 2
+      transaction.state.log.replication.factor: 2
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 2
+      min.insync.replicas: 2
+    storage: # (2)
+      type: persistent-claim
+      size: 5Gi
+      deleteClaim: true
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+      - name: external
+        port: 9094
+        type: nodeport
+        tls: false
+    version: 3.7.0
+    metricsConfig: # (3)
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: kafka-metrics
+          key: kafka-metrics-config.yml
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+  cruiseControl: {} # (4)
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kafka-metrics
+  namespace: onchain
+  labels:
+    app: strimzi
+data:
+  kafka-metrics-config.yml: |
+    lowercaseOutputName: true
+    rules:
+    - pattern: kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value
+      name: kafka_server_$1_$2
+      type: GAUGE
+      labels:
+        clientId: "$3"
+        topic: "$4"
+        partition: "$5"
+    - pattern: kafka.server<type=(.+), name=(.+), clientId=(.+), brokerHost=(.+), brokerPort=(.+)><>Value
+      name: kafka_server_$1_$2
+      type: GAUGE
+      labels:
+        clientId: "$3"
+        broker: "$4:$5"
+    - pattern: kafka.server<type=(.+), cipher=(.+), protocol=(.+), listener=(.+), networkProcessor=(.+)><>connections
+      name: kafka_server_$1_connections_tls_info
+      type: GAUGE
+      labels:
+        cipher: "$2"
+        protocol: "$3"
+        listener: "$4"
+        networkProcessor: "$5"
+    - pattern: kafka.server<type=(.+), clientSoftwareName=(.+), clientSoftwareVersion=(.+), listener=(.+), networkProcessor=(.+)><>connections
+      name: kafka_server_$1_connections_software
+      type: GAUGE
+      labels:
+        clientSoftwareName: "$2"
+        clientSoftwareVersion: "$3"
+        listener: "$4"
+        networkProcessor: "$5"
+    - pattern: "kafka.server<type=(.+), listener=(.+), networkProcessor=(.+)><>(.+):"
+      name: kafka_server_$1_$4
+      type: GAUGE
+      labels:
+        listener: "$2"
+        networkProcessor: "$3"
+    - pattern: kafka.server<type=(.+), listener=(.+), networkProcessor=(.+)><>(.+)
+      name: kafka_server_$1_$4
+      type: GAUGE
+      labels:
+        listener: "$2"
+        networkProcessor: "$3"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*><>MeanRate
+      name: kafka_$1_$2_$3_percent
+      type: GAUGE
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*><>Value
+      name: kafka_$1_$2_$3_percent
+      type: GAUGE
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*, (.+)=(.+)><>Value
+      name: kafka_$1_$2_$3_percent
+      type: GAUGE
+      labels:
+        "$4": "$5"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)PerSec\w*, (.+)=(.+), (.+)=(.+)><>Count
+      name: kafka_$1_$2_$3_total
+      type: COUNTER
+      labels:
+        "$4": "$5"
+        "$6": "$7"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)PerSec\w*, (.+)=(.+)><>Count
+      name: kafka_$1_$2_$3_total
+      type: COUNTER
+      labels:
+        "$4": "$5"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)PerSec\w*><>Count
+      name: kafka_$1_$2_$3_total
+      type: COUNTER
+    - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Value
+      name: kafka_$1_$2_$3
+      type: GAUGE
+      labels:
+        "$4": "$5"
+        "$6": "$7"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+)><>Value
+      name: kafka_$1_$2_$3
+      type: GAUGE
+      labels:
+        "$4": "$5"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)><>Value
+      name: kafka_$1_$2_$3
+      type: GAUGE
+    - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Count
+      name: kafka_$1_$2_$3_count
+      type: COUNTER
+      labels:
+        "$4": "$5"
+        "$6": "$7"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.*), (.+)=(.+)><>(\d+)thPercentile
+      name: kafka_$1_$2_$3
+      type: GAUGE
+      labels:
+        "$4": "$5"
+        "$6": "$7"
+        quantile: "0.$8"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+)><>Count
+      name: kafka_$1_$2_$3_count
+      type: COUNTER
+      labels:
+        "$4": "$5"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.*)><>(\d+)thPercentile
+      name: kafka_$1_$2_$3
+      type: GAUGE
+      labels:
+        "$4": "$5"
+        quantile: "0.$6"
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)><>Count
+      name: kafka_$1_$2_$3_count
+      type: COUNTER
+    - pattern: kafka.(\w+)<type=(.+), name=(.+)><>(\d+)thPercentile
+      name: kafka_$1_$2_$3
+      type: GAUGE
+      labels:
+        quantile: "0.$4"
+    - pattern: "kafka.server<type=raft-metrics><>(.+-total|.+-max):"
+      name: kafka_server_raftmetrics_$1
+      type: COUNTER
+    - pattern: "kafka.server<type=raft-metrics><>(.+):"
+      name: kafka_server_raftmetrics_$1
+      type: GAUGE
+    - pattern: "kafka.server<type=raft-channel-metrics><>(.+-total|.+-max):"
+      name: kafka_server_raftchannelmetrics_$1
+      type: COUNTER
+    - pattern: "kafka.server<type=raft-channel-metrics><>(.+):"
+      name: kafka_server_raftchannelmetrics_$1
+      type: GAUGE
+    - pattern: "kafka.server<type=broker-metadata-metrics><>(.+):"
+      name: kafka_server_brokermetadatametrics_$1
+      type: GAUGE
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: blockchain.evm.block
+  namespace: onchain
+  labels:
+    strimzi.io/cluster: onchain
+spec:
+  partitions: 10
+  replicas: 2
+  config:
+    retention.ms: 7200000
+    segment.bytes: 1000000
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: test
+  namespace: onchain
+  labels:
+    strimzi.io/cluster: onchain
+spec:
+  partitions: 10
+  replicas: 2
+  config:
+    retention.ms: 7200000
+    segment.bytes: 1000000
+
+# ---
+# apiVersion: kafka.strimzi.io/v1beta2
+# kind: KafkaRebalance
+# metadata:
+#   name: my-rebalance
+#   labels:
+#     strimzi.io/cluster: my-cluster
+# spec: {}

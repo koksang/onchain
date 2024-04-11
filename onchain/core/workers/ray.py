@@ -1,7 +1,10 @@
 """Ray Stream Worker"""
 
+from collections.abc import Callable
+from typing import Type, Union
+
 import ray
-from typing import Union, Type, Callable
+
 from onchain.core.base import BaseModule
 from onchain.logger import log
 
@@ -39,9 +42,7 @@ class RayManager(BaseModule):
         self.process = process
         log.info(f"Initiated {self._name}")
 
-    def run(
-        self, ray_worker: Union[Type[BaseModule], RayStreamer] = RayStreamer
-    ) -> None:
+    def run(self, ray_worker: type[BaseModule] | RayStreamer = RayStreamer) -> None:
         """Run ray manager
 
         Args:

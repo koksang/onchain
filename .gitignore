@@ -6,9 +6,11 @@ notebooks
 .ipynb_checkpoints
 __pycache__
 outputs
-tests
+# tests
 logs
 data
+credentials
+
 
 # files
 .csv
@@ -17,4 +19,3 @@ data
 .idea
 Thumbs.db
 *test.*
-requirements.txt
