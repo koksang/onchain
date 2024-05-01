@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 import json
-import sys
+import os
 from configparser import ConfigParser
 from random import choice
 
 from confluent_kafka import Producer
 
-NODE_API_URL = "https://late-compatible-sponge.quiknode.pro/8493db3aae9348e70a783905b9a158dc26023b6b"
+NODE_API_URL = os.environ.get("NODE_API_URL")
 CONFIG_FILE = "./tests/kafka/config.ini"
 TOPIC = "blockchain.evm.blocknumber"
 MESSAGES = [

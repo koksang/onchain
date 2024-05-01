@@ -154,6 +154,8 @@ output:
         number Int64,
         hash String,
         parent_hash String,
+        nonce String,
+        sha3
 
         foo varchar(50) not null,
         bar integer,
