@@ -98,7 +98,7 @@ pipeline:
     #     import_paths: [onchain/models/blockchains]
 output:
   sql_insert:
-    driver: "" # No default (required)
+    driver: clickhouse
     dsn: clickhouse://onchain:onchain@localhost:31000/ethereum?dial_timeout=200ms&max_execution_time=60 # No default (required)
     table: block # No default (required)
     columns:
@@ -151,17 +151,34 @@ output:
     init_files: [] # No default (optional)
     init_statement: | # No default (optional)
       CREATE TABLE IF NOT EXISTS block (
-        number Int64,
-        hash String,
+        number Int64 not null,
+        hash String not_null,
         parent_hash String,
         nonce String,
-        sha3
+        sha3_uncles String,
+        logs_bloom String,
+        transactions_root String,
+        state_root String,
+        receipts_root String,
+        miner String not_null,
+        mix_hash String,
+        difficulty Int64 not_null,
+        total_difficulty Int128 not_null,
+        extra_data String,
+        size Int64 not_null,
+        gas_limit Int32 not_null,
+        gas_used Int32 not_null,
+        timestamp Int64 not_null,
+        transactions Array(String),
+        uncles Array(String)
+
+        primary key (number)
 
         foo varchar(50) not null,
         bar integer,
         baz varchar(50),
         primary key (foo)
-      ) WITHOUT ROWID;
+      );
     conn_max_idle_time: "" # No default (optional)
     conn_max_life_time: "" # No default (optional)
     conn_max_idle: 2
