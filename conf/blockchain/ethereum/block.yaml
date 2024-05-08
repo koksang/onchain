@@ -2,7 +2,7 @@ http:
   enabled: false
 input:
   kafka:
-    addresses: [172.18.0.3:30000] # No default (required)
+    addresses: [192.168.108.2:30094] # No default (required)
     topics: [blockchain.evm.blocknumber] # No default (required)
     target_version: 3.7.0 # No default (optional)
     consumer_group: "onchain"
@@ -99,7 +99,7 @@ pipeline:
 output:
   sql_insert:
     driver: clickhouse
-    dsn: clickhouse://onchain:onchain@localhost:31000/ethereum?dial_timeout=200ms&max_execution_time=60 # No default (required)
+    dsn: clickhouse://onchain:onchain@192.168.108.2:30900/ethereum?dial_timeout=200ms&max_execution_time=60 # No default (required)
     table: block # No default (required)
     columns:
       - number
@@ -124,26 +124,26 @@ output:
       - uncles
     args_mapping: |
       root = [ 
-        this.number
-        , this.hash
-        , this.parent_hash
-        , this.nonce
-        , this.sha3_uncles
-        , this.logs_bloom
-        , this.transactions_root
-        , this.state_root
-        , this.receipts_root
-        , this.miner
-        , this.mix_hash
-        , this.difficulty
-        , this.total_difficulty
-        , this.extra_data
-        , this.size
-        , this.gas_limit
-        , this.gas_used
-        , this.timestamp
-        , this.transactions
-        , this.uncles 
+        this.number,
+        this.hash,
+        this.parent_hash,
+        this.nonce,
+        this.sha3_uncles,
+        this.logs_bloom,
+        this.transactions_root,
+        this.state_root,
+        this.receipts_root,
+        this.miner,
+        this.mix_hash,
+        this.difficulty,
+        this.total_difficulty,
+        this.extra_data,
+        this.size,
+        this.gas_limit,
+        this.gas_used,
+        this.timestamp,
+        this.transactions,
+        this.uncles
       ]
     prefix: "" # No default (optional)
     suffix: ON CONFLICT (name) DO NOTHING # No default (optional)
@@ -152,7 +152,7 @@ output:
     init_statement: | # No default (optional)
       CREATE TABLE IF NOT EXISTS block (
         number Int64 not null,
-        hash String not_null,
+        hash String not null,
         parent_hash String,
         nonce String,
         sha3_uncles String,
@@ -160,27 +160,22 @@ output:
         transactions_root String,
         state_root String,
         receipts_root String,
-        miner String not_null,
+        miner String not null,
         mix_hash String,
-        difficulty Int64 not_null,
-        total_difficulty Int128 not_null,
+        difficulty Int64 not null,
+        total_difficulty Int64 not null,
         extra_data String,
-        size Int64 not_null,
-        gas_limit Int32 not_null,
-        gas_used Int32 not_null,
-        timestamp Int64 not_null,
+        size Int64 not null,
+        gas_limit Int32 not null,
+        gas_used Int32 not null,
+        timestamp Int64 not null,
         transactions Array(String),
         uncles Array(String)
-
-        primary key (number)
-
-        foo varchar(50) not null,
-        bar integer,
-        baz varchar(50),
-        primary key (foo)
-      );
-    conn_max_idle_time: "" # No default (optional)
-    conn_max_life_time: "" # No default (optional)
+      )
+      engine = MergeTree()
+      primary key (number);
+    conn_max_idle_time: "60s"
+    conn_max_life_time: "0"
     conn_max_idle: 2
     conn_max_open: 0 # No default (optional)
     batching:
@@ -190,7 +185,7 @@ output:
       check: ""
       processors: [] # No default (optional)
   # kafka:
-  #   addresses: [172.18.0.3:30000]
+  #   addresses: [192.168.108.2:30094]
   #   topic: blockchain.evm.block # No default (required)
   #   client_id: benthos
   #   target_version: 3.7.0 # No default (optional)

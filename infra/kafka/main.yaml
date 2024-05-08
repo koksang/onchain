@@ -64,6 +64,9 @@ spec:
         port: 9094
         type: nodeport
         tls: false
+        configuration:
+          bootstrap:
+            nodePort: 30094
     version: 3.7.0
     metricsConfig: # (3)
       type: jmxPrometheusExporter
@@ -225,25 +228,25 @@ metadata:
   labels:
     strimzi.io/cluster: onchain
 spec:
-  partitions: 10
+  partitions: 4
   replicas: 2
   config:
-    retention.ms: 7200000
+    retention.ms: 900000
     segment.bytes: 1000000
 
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: test
+  name: blockchain.evm.blocknumber
   namespace: onchain
   labels:
     strimzi.io/cluster: onchain
 spec:
-  partitions: 10
+  partitions: 4
   replicas: 2
   config:
-    retention.ms: 7200000
+    retention.ms: 900000
     segment.bytes: 1000000
 
 # ---

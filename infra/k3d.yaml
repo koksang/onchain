@@ -1,0 +1,26 @@
+apiVersion: k3d.io/v1alpha4
+kind: Simple
+metadata:
+  name: main
+servers: 1
+agents: 0
+volumes:
+  - volume: /opt/k3d:/data
+network: host
+options:
+  k3d:
+    wait: true
+    disableLoadbalancer: true
+    disableImageVolume: false
+    disableRollback: false
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*
+      - arg: --disable=metrics-server
+        nodeFilters:
+          - server:*
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true

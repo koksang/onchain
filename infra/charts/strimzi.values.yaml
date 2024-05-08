@@ -37,7 +37,7 @@ tmpDirSizeLimit: 1Mi
 extraEnvs: []
 
 tolerations: []
-affinity: {}b
+affinity: {}
 annotations: {}
 labels: {}
 nodeSelector: {}
