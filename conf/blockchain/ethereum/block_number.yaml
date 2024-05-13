@@ -1,0 +1,88 @@
+http:
+  enabled: true
+  address: 0.0.0.0:7777
+  root_path: /benthos
+  debug_endpoints: true
+input:
+  http_client:
+    url: ${NODE_API_URL}
+    verb: POST
+    headers:
+      Content-Type: application/json
+    rate_limit: api_limit
+    payload: '{"method": "eth_blockNumber", "id": 1, "jsonrpc": "2.0"}'
+    stream:
+      enabled: false
+      reconnect: true
+      scanner:
+        lines: {}
+    auto_replay_nacks: true
+pipeline:
+  threads: -1
+  processors:
+    - mapping: root.block_number = this.result
+    - log:
+        level: INFO
+        message: ${! this }
+output:
+  # file:
+  #   path: test.txt
+  #   codec: lines
+  # kafka:
+    addresses: [${KAFKA_HOST}]
+    topic: blockchain.evm.blocknumber # No default (required)
+    client_id: benthos
+    target_version: 3.7.0 # No default (optional)
+    rack_id: ""
+    key: ""
+    partitioner: fnv1a_hash
+    partition: ""
+    compression: none
+    static_headers: {} # No default (optional)
+    metadata:
+      exclude_prefixes: []
+    inject_tracing_map: meta = @.merge(this) # No default (optional)
+    max_in_flight: 100
+    idempotent_write: false
+    ack_replicas: false
+    max_msg_bytes: 1000000
+    timeout: 5s
+    retry_as_batch: false
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: [] # No default (optional)
+    max_retries: 5
+    backoff:
+      initial_interval: 3s
+      max_interval: 10s
+      max_elapsed_time: 30s
+rate_limit_resources:
+  - label: api_limit
+    local:
+      count: 1
+      interval: ${API_LIMIT_INTERVAL}
+logger:
+  level: INFO
+  format: logfmt
+  add_timestamp: false
+  level_name: level
+  timestamp_name: time
+  message_name: msg
+  static_fields:
+    '@service': benthos
+  file:
+    path: ""
+    rotate: false
+    rotate_max_age_days: 0
+metrics:
+  prometheus: {}
+  mapping: ""
+tracer:
+  none: {}
+shutdown_delay: 0s
+shutdown_timeout: 20s
+tests: []
+

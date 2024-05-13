@@ -219,36 +219,6 @@ data:
       name: kafka_server_brokermetadatametrics_$1
       type: GAUGE
 
----
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaTopic
-metadata:
-  name: blockchain.evm.block
-  namespace: onchain
-  labels:
-    strimzi.io/cluster: onchain
-spec:
-  partitions: 4
-  replicas: 2
-  config:
-    retention.ms: 900000
-    segment.bytes: 1000000
-
----
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaTopic
-metadata:
-  name: blockchain.evm.blocknumber
-  namespace: onchain
-  labels:
-    strimzi.io/cluster: onchain
-spec:
-  partitions: 4
-  replicas: 2
-  config:
-    retention.ms: 900000
-    segment.bytes: 1000000
-
 # ---
 # apiVersion: kafka.strimzi.io/v1beta2
 # kind: KafkaRebalance

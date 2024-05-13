@@ -1,63 +1,13 @@
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-storage
-  namespace: onchain
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
 ---
-# apiVersion: v1
-# kind: PersistentVolume
-# metadata:
-#   name: local-path-pv
-#   namespace: onchain
-# spec:
-#   capacity:
-#     storage: 50Gi
-#   accessModes:
-#     - ReadWriteMany
-#   persistentVolumeReclaimPolicy: Retain
-#   storageClassName: local-storage
-#   local:
-#     path: /data
-#   nodeAffinity:
-#     required:
-#       nodeSelectorTerms:
-#         - matchExpressions:
-#           - key: kubernetes.io/hostname
-#             operator: In
-#             values:
-#               - k3d-main-agent-0
-#               - k3d-main-agent-1
-# ---
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   name: local-path-pvc
-#   namespace: onchain
-# spec:
-#   storageClassName: local-storage
-#   accessModes:
-#     - ReadWriteMany
-#   resources:
-#     requests:
-#       storage: 50Gi
-apiVersion: v1
-kind: PersistentVolume
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
 metadata:
-  name: pv
-  namespace: onchain
-  labels:
-    type: local
-spec:
-  capacity:
-    storage: 50Gi
-  accessModes:
-    - ReadWriteMany
-  storageClassName: standard-rwx
-  hostPath:
-    path: /data
-  persistentVolumeReclaimPolicy: Retain
+  name: ch-storage
+provisioner: microk8s.io/hostpath
+reclaimPolicy: Retain
+parameters:
+  pvDir: /data/clickhouse
+volumeBindingMode: WaitForFirstConsumer
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -65,6 +15,7 @@ metadata:
   name: pvc
   namespace: onchain
 spec:
+  storageClassName: ch-storage
   accessModes:
     - ReadWriteMany
   resources:
@@ -215,4 +166,9 @@ spec:
       targetPort: 9000
       protocol: TCP
       nodePort: 30900
-      name: http-nodeport-non-tls
+      name: http-external
+    - port: 8443
+      targetPort: 8443
+      protocol: TCP
+      nodePort: 30943
+      name: http-tls-external

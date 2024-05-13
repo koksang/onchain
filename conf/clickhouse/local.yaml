@@ -1,0 +1,3 @@
+host: clickhouse.${cluster.namespace}.${cluster.service_host}
+user: onchain
+password: onchain

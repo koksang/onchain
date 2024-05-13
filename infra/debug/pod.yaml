@@ -1,20 +1,47 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nats-box
+  name: proton
   namespace: onchain
 spec:
   containers:
-    - image: natsio/nats-box:latest
+    - image: ghcr.io/timeplus-io/proton:latest
+      name: proton
+      # command: ["sleep", "infinity"]
+      resources:
+        limits:
+          cpu: 250m
+          memory: 1Gi
+        requests:
+          cpu: 250m
+          memory: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test
+  namespace: onchain
+spec:
+  volumes:
+    - name: test
+      hostPath:
+        path: /data
+        type: Directory
+  containers:
+    - image: python:3.11
       name: test
       command: ["sleep", "infinity"]
       resources:
         limits:
           cpu: 200m
-          memory: 384Mi
+          memory: 512Mi
         requests:
           cpu: 200m
-          memory: 384Mi
+          memory: 512Mi
+      volumeMounts:
+        - name: test
+          mountPath: /data
+
   # nodeSelector:
   #   type: workload
   # affinity:

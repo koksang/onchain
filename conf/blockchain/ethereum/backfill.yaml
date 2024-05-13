@@ -1,0 +1,145 @@
+http:
+  enabled: true
+  address: 0.0.0.0:7777
+  root_path: /benthos
+  debug_endpoints: true
+input:
+  sql_raw:
+    driver: clickhouse
+    dsn: ${CH_HOST}/ethereum?dial_timeout=200ms&max_execution_time=60
+    query: select max(number) ch_block_number from block
+    init_statement: |
+      CREATE TABLE IF NOT EXISTS block (
+        number Int64 not null,
+        hash String not null,
+        parent_hash String,
+        nonce String,
+        sha3_uncles String,
+        logs_bloom String,
+        transactions_root String,
+        state_root String,
+        receipts_root String,
+        miner String not null,
+        mix_hash String,
+        difficulty Int64 not null,
+        total_difficulty Int64 not null,
+        extra_data String,
+        size Int64 not null,
+        gas_limit Int32 not null,
+        gas_used Int32 not null,
+        timestamp Int64 not null,
+        transactions Array(String),
+        uncles Array(String)
+      )
+      engine = MergeTree()
+      primary key (number);
+    args_mapping: root = [this.ch_block_number]
+pipeline:
+  threads: -1
+  processors:
+    - branch:
+        request_map: |
+          root.method = "eth_blockNumber"
+          root.id = 1
+          root.jsonrpc = "2.0"
+        processors:
+          - http:
+              url: ${NODE_API_URL}
+              verb: POST
+              headers:
+                Content-Type: application/json
+              rate_limit: api_limit
+              timeout: 5s
+        result_map: root.node_block_number = this.result
+    - awk:
+        codec: none
+        program: |
+          function hex2dec(hex) {
+            dec = 0;
+            for (x=1; x<=length(hex); x++) {
+              dec = (dec * 16) + index("123456789abcdef", tolower(substr(hex, x, 1)));
+            }
+            return dec;
+          }
+
+          {
+            json_set_int("node_block_number", hex2dec(json_get("node_block_number")));
+          }
+    - mapping: |
+        if this.node_block_number > this.ch_block_number {
+          root = range(
+            start: this.ch_block_number + 1,
+            stop: [
+              this.node_block_number + 1,
+              this.ch_block_number + 1 + ${MAX_NEW_BLOCK_NUMBERS}
+            ].min()
+          )
+        }
+        else {
+          root = deleted()
+        }
+    - unarchive:
+        format: json_array
+    - mapping: |
+        root.block_number = "0x%x".format(this)
+    - log:
+        level: DEBUG
+        message: ${! this.block_number }
+output:
+  # file:
+  #   path: test.txt
+  #   codec: lines
+  kafka:
+    addresses: [${KAFKA_HOST}]
+    topic: blockchain.ethereum.blocknumber
+    client_id: benthos
+    target_version: 3.7.0
+    rack_id: ""
+    key: ""
+    partitioner: fnv1a_hash
+    partition: ""
+    compression: none
+    static_headers: {}
+    metadata:
+      exclude_prefixes: []
+    inject_tracing_map: meta = @.merge(this)
+    max_in_flight: 100
+    idempotent_write: false
+    ack_replicas: false
+    max_msg_bytes: 1000000
+    timeout: 5s
+    retry_as_batch: false
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: [] # No default (optional)
+    max_retries: 5
+    backoff:
+      initial_interval: 3s
+      max_interval: 10s
+      max_elapsed_time: 30s
+rate_limit_resources:
+  - label: api_limit
+    local:
+      count: 1
+      interval: ${API_LIMIT_INTERVAL}
+logger:
+  level: INFO
+  format: logfmt
+  add_timestamp: true
+  level_name: level
+  timestamp_name: time
+  message_name: msg
+  static_fields:
+    '@service': benthos
+metrics:
+  prometheus: {}
+  mapping: ""
+tracer:
+  none: {}
+shutdown_delay: 0s
+shutdown_timeout: 20s
+tests: []
+

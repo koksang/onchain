@@ -6,7 +6,7 @@ from configparser import ConfigParser
 from confluent_kafka import Consumer
 
 CONFIG_FILE = "./tests/kafka/config.ini"
-TOPIC = "blockchain.evm.block"
+TOPIC = "blockchain.ethereum.blocknumber"
 
 if __name__ == "__main__":
     # Parse the configuration.

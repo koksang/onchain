@@ -9,14 +9,11 @@ from confluent_kafka import Producer
 
 NODE_API_URL = os.environ.get("NODE_API_URL")
 CONFIG_FILE = "./tests/kafka/config.ini"
-TOPIC = "blockchain.evm.blocknumber"
+TOPIC = "blockchain.ethereum.blocknumber"
 MESSAGES = [
-    dict(
-        key="input",
-        # value=json.dumps({"block_number": "0xc5043f"}),
-        value=json.dumps({"block_number": "0x1e8480"}),  # block_number = 2000000
-    ),
-] * 2
+    dict(key="block_number", value="0x1e8480"),  # block_number = 2000000
+    dict(key="block_number", value="0x138548"),  # block_number = 2000200
+]
 
 if __name__ == "__main__":
     # Parse the configuration.

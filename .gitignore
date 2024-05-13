@@ -19,3 +19,4 @@ credentials
 .idea
 Thumbs.db
 *test.*
+.env
