@@ -9,7 +9,7 @@ spec:
   partitions: 4
   replicas: 2
   config:
-    retention.ms: 900000
+    retention.ms: 1800000
     segment.bytes: 1000000
 
 ---
@@ -24,5 +24,20 @@ spec:
   partitions: 4
   replicas: 2
   config:
-    retention.ms: 900000
+    retention.ms: 1800000
+    segment.bytes: 1000000
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: blockchain.ethereum.test
+  namespace: onchain
+  labels:
+    strimzi.io/cluster: onchain
+spec:
+  partitions: 4
+  replicas: 2
+  config:
+    retention.ms: 1800000
     segment.bytes: 1000000

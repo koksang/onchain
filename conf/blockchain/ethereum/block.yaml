@@ -32,7 +32,7 @@ pipeline:
   processors:
     - mapping: |
         root.method = "eth_getBlockByNumber"
-        root.params = [this.block_number, false]
+        root.params = ["0x%x".format(this.block_number.uint32()), false]
         root.id = 1
         root.jsonrpc = "2.0"
     - http:
@@ -84,9 +84,11 @@ pipeline:
             json_set_int("gas_used", hex2dec(json_get("gas_used")));
             timestamp_format( json_set_int("timestamp", hex2dec(json_get("timestamp"))) );
           }
+
     - log:
-        level: DEBUG
-        message: ${! this.number }
+        level: INFO
+        # message: uncles = ${! this.uncles },  test = ${! this.uncles.map_each( uncle -> uncle.unquote() ) }
+        message: block_number = ${! this.number }
     # NOTE: WIP
     # - schema_registry_encode:
     #     url: http://localhost:8081
@@ -99,9 +101,42 @@ pipeline:
     #     use_proto_names: false
     #     import_paths: [onchain/models/blockchains]
 output:
-  # file:
-  #   path: test.txt
-  #   codec: lines
+  # broker:
+  #   outputs:
+  #     - file:
+  #         path: testing.txt
+  #         codec: lines
+      # - kafka:
+      #     addresses: [${KAFKA_HOST}]
+      #     topic: blockchain.ethereum.test
+      #     client_id: benthos
+      #     target_version: 3.7.0
+      #     rack_id: ""
+      #     key: ""
+      #     partitioner: fnv1a_hash
+      #     partition: ""
+      #     compression: none
+      #     static_headers: {}
+      #     metadata:
+      #       exclude_prefixes: []
+      #     inject_tracing_map: meta = @.merge(this)
+      #     max_in_flight: 100
+      #     idempotent_write: false
+      #     ack_replicas: false
+      #     max_msg_bytes: 1000000
+      #     timeout: 5s
+      #     retry_as_batch: false
+      #     batching:
+      #       count: 0
+      #       byte_size: 0
+      #       period: ""
+      #       check: ""
+      #       processors: [] # No default (optional)
+      #     max_retries: 5
+      #     backoff:
+      #       initial_interval: 3s
+      #       max_interval: 10s
+      #       max_elapsed_time: 30s
   sql_insert:
     driver: clickhouse
     dsn: ${CH_HOST}/ethereum?dial_timeout=200ms&max_execution_time=60
@@ -178,16 +213,16 @@ output:
       )
       engine = MergeTree()
       primary key (number);
-    conn_max_idle_time: "60s"
-    conn_max_life_time: "0"
-    conn_max_idle: 2
-    conn_max_open: 0
     batching:
       count: 0
       byte_size: 0
       period: ""
       check: ""
       processors: []
+    conn_max_idle_time: "60s"
+    conn_max_life_time: "0"
+    conn_max_idle: 2
+    conn_max_open: 0
 rate_limit_resources:
   - label: api_limit
     local:
@@ -201,7 +236,9 @@ logger:
   timestamp_name: time
   message_name: msg
   static_fields:
-    '@service': benthos
+    "@application": onchain
+    "@blockchain": ethereum
+    "@data": block
 metrics:
   prometheus: {}
   mapping: ""

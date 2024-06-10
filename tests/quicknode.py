@@ -21,17 +21,17 @@ payload = json.dumps(
     }
 )
 
-# payload = json.dumps(
-#     {
-#         "method": "eth_getBlockByNumber",
-#         "params": [
-#             "0xc5043f",
-#             False,
-#         ],
-#         "id": 1,
-#         "jsonrpc": "2.0",
-#     }
-# )
+payload = json.dumps(
+    {
+        "method": "eth_getBlockByNumber",
+        "params": [
+            "0x1",
+            False,
+        ],
+        "id": 1,
+        "jsonrpc": "2.0",
+    }
+)
 response = request(
     "POST", URL, headers={"Content-Type": "application/json"}, data=payload
 )

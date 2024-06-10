@@ -1,27 +1,4 @@
 ---
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: ch-storage
-provisioner: microk8s.io/hostpath
-reclaimPolicy: Retain
-parameters:
-  pvDir: /data/clickhouse
-volumeBindingMode: WaitForFirstConsumer
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: pvc
-  namespace: onchain
-spec:
-  storageClassName: ch-storage
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 50Gi
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -93,7 +70,7 @@ spec:
             name: clickhouse-configmap
         - name: clickhouse-storage
           persistentVolumeClaim:
-            claimName: pvc
+            claimName: ch-pvc
       containers:
       - name: clickhouse
         image: clickhouse/clickhouse-server:24.1.6.52-alpine
@@ -105,10 +82,10 @@ spec:
         - containerPort: 9363
         resources:
           limits:
-            cpu: 750m
+            cpu: 2
             memory: 4Gi
           requests:
-            cpu: 500m
+            cpu: 2
             memory: 4Gi
         volumeMounts:
             - name: clickhouse-storage

@@ -16,7 +16,14 @@ spec:
       - id: 0
         type: persistent-claim
         size: 30Gi
-        deleteClaim: false
+        deleteClaim: true
+  resources:
+    requests:
+      memory: 4Gi
+      cpu: 1
+    limits:
+      memory: 4Gi
+      cpu: 1
   # template:
   #   pod:
   #     affinity:
