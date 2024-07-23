@@ -1,0 +1,250 @@
+http:
+  enabled: false
+input:
+  kafka:
+    addresses: [${KAFKA_HOST}]
+    topics: [blockchain.ethereum.blocknumber]
+    target_version: 3.7.0
+    consumer_group: "onchain"
+    client_id: benthos
+    rack_id: ""
+    start_from_oldest: true
+    checkpoint_limit: 1024
+    commit_period: 1s
+    max_processing_period: 100ms
+    extract_tracing_map: root = @
+    group:
+      session_timeout: 10s
+      heartbeat_interval: 3s
+      rebalance_timeout: 60s
+    fetch_buffer_cap: 256
+    multi_header: false
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: []
+buffer:
+  none: {}
+pipeline:
+  threads: -1
+  processors:
+    - mapping: |
+        root.method = "eth_getBlockByNumber"
+        root.params = ["0x%x".format(this.block_number.uint32()), false]
+        root.id = 1
+        root.jsonrpc = "2.0"
+    - http:
+        url: ${NODE_API_URL}
+        verb: POST
+        headers:
+          Content-Type: application/json
+        rate_limit: api_limit
+        timeout: 5s
+        parallel: false
+    - mapping: |
+        root.number = this.result.number
+        root.hash = this.result.hash
+        root.parent_hash = this.result.parentHash
+        root.nonce = this.result.nonce
+        root.sha3_uncles = this.result.sha3Uncles
+        root.logs_bloom = this.result.logsBloom
+        root.transactions_root = this.result.transactionsRoot
+        root.state_root = this.result.stateRoot
+        root.receipts_root = this.result.receiptsRoot
+        root.miner = this.result.miner
+        root.mix_hash = this.result.mixHash
+        root.difficulty = this.result.difficulty
+        root.total_difficulty = this.result.totalDifficulty
+        root.extra_data = this.result.extraData
+        root.size = this.result.size
+        root.gas_limit = this.result.gasLimit
+        root.gas_used = this.result.gasUsed
+        root.timestamp = this.result.timestamp
+        root.transactions = this.result.transactions
+        root.uncles = this.result.uncles
+    - awk:
+        codec: none
+        program: |
+          function hex2dec(hex) {
+            dec = 0;
+            for (x=1; x<=length(hex); x++) {
+              dec = (dec * 16) + index("123456789abcdef", tolower(substr(hex, x, 1)));
+            }
+            return dec;
+          }
+
+          {
+            json_set_int("number", hex2dec(json_get("number")));
+            json_set_int("difficulty", hex2dec(json_get("difficulty")));
+            json_set_int("total_difficulty", hex2dec(json_get("total_difficulty")));
+            json_set_int("size", hex2dec(json_get("size")));
+            json_set_int("gas_limit", hex2dec(json_get("gas_limit")));
+            json_set_int("gas_used", hex2dec(json_get("gas_used")));
+            timestamp_format( json_set_int("timestamp", hex2dec(json_get("timestamp"))) );
+          }
+
+    - log:
+        level: INFO
+        # message: uncles = ${! this.uncles },  test = ${! this.uncles.map_each( uncle -> uncle.unquote() ) }
+        message: block_number = ${! this.number }
+    # NOTE: WIP
+    # - schema_registry_encode:
+    #     url: http://localhost:8081
+    #     subject: evm_blocks
+    #     refresh_period: 15s
+    # - protobuf:
+    #     operator: from_json
+    #     message: evm.Block2
+    #     discard_unknown: true
+    #     use_proto_names: false
+    #     import_paths: [onchain/models/blockchains]
+output:
+  # broker:
+  #   outputs:
+  #     - file:
+  #         path: testing.txt
+  #         codec: lines
+      # - kafka:
+      #     addresses: [${KAFKA_HOST}]
+      #     topic: blockchain.ethereum.test
+      #     client_id: benthos
+      #     target_version: 3.7.0
+      #     rack_id: ""
+      #     key: ""
+      #     partitioner: fnv1a_hash
+      #     partition: ""
+      #     compression: none
+      #     static_headers: {}
+      #     metadata:
+      #       exclude_prefixes: []
+      #     inject_tracing_map: meta = @.merge(this)
+      #     max_in_flight: 100
+      #     idempotent_write: false
+      #     ack_replicas: false
+      #     max_msg_bytes: 1000000
+      #     timeout: 5s
+      #     retry_as_batch: false
+      #     batching:
+      #       count: 0
+      #       byte_size: 0
+      #       period: ""
+      #       check: ""
+      #       processors: [] # No default (optional)
+      #     max_retries: 5
+      #     backoff:
+      #       initial_interval: 3s
+      #       max_interval: 10s
+      #       max_elapsed_time: 30s
+  sql_insert:
+    driver: clickhouse
+    dsn: ${CH_HOST}/ethereum?dial_timeout=200ms&max_execution_time=60
+    table: block
+    columns:
+      - number
+      - hash
+      - parent_hash
+      - nonce
+      - sha3_uncles
+      - logs_bloom
+      - transactions_root
+      - state_root
+      - receipts_root
+      - miner
+      - mix_hash
+      - difficulty
+      - total_difficulty
+      - extra_data
+      - size
+      - gas_limit
+      - gas_used
+      - timestamp
+      - transactions
+      - uncles
+    args_mapping: |
+      root = [ 
+        this.number,
+        this.hash,
+        this.parent_hash,
+        this.nonce,
+        this.sha3_uncles,
+        this.logs_bloom,
+        this.transactions_root,
+        this.state_root,
+        this.receipts_root,
+        this.miner,
+        this.mix_hash,
+        this.difficulty,
+        this.total_difficulty,
+        this.extra_data,
+        this.size,
+        this.gas_limit,
+        this.gas_used,
+        this.timestamp,
+        this.transactions,
+        this.uncles
+      ]
+    prefix: ""
+    suffix: ON CONFLICT (name) DO NOTHING
+    max_in_flight: 100
+    init_statement: |
+      CREATE TABLE IF NOT EXISTS block (
+        number Int64 not null,
+        hash String not null,
+        parent_hash String,
+        nonce String,
+        sha3_uncles String,
+        logs_bloom String,
+        transactions_root String,
+        state_root String,
+        receipts_root String,
+        miner String not null,
+        mix_hash String,
+        difficulty Int64 not null,
+        total_difficulty Int64 not null,
+        extra_data String,
+        size Int64 not null,
+        gas_limit Int32 not null,
+        gas_used Int32 not null,
+        timestamp Int64 not null,
+        transactions Array(String),
+        uncles Array(String)
+      )
+      engine = MergeTree()
+      primary key (number);
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: []
+    conn_max_idle_time: "60s"
+    conn_max_life_time: "0"
+    conn_max_idle: 2
+    conn_max_open: 0
+rate_limit_resources:
+  - label: api_limit
+    local:
+      count: 1
+      interval: ${API_LIMIT_INTERVAL}
+logger:
+  level: INFO
+  format: logfmt
+  add_timestamp: true
+  level_name: level
+  timestamp_name: time
+  message_name: msg
+  static_fields:
+    "@application": onchain
+    "@blockchain": ethereum
+    "@data": block
+metrics:
+  prometheus: {}
+  mapping: ""
+tracer:
+  none: {}
+shutdown_delay: 0s
+shutdown_timeout: 20s
+tests: []
+

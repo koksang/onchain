@@ -1,4 +1,0 @@
-mirrors:
-"localhost:7777":
-    endpoint:
-      - http://k3d-registry.localhost:7777

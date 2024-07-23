@@ -1,0 +1,2 @@
+namespace: ${environment.name}
+service_host: svc.cluster.local

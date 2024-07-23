@@ -1,0 +1,6 @@
+default:
+  bootstrap.servers: ${environment.name}-kafka-bootstrap.${cluster.namespace}.${cluster.service_host}:9092
+consumer:
+  group.id: app
+  enable.partition.eof: true
+  auto.offset.reset: earliest

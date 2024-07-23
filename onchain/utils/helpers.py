@@ -1,56 +1,26 @@
 """Helper functions"""
 
-import json
-import pytz
-from importlib import import_module
-from base64 import b64decode
-from typing import Union, Type
-from datetime import datetime, timezone
-from onchain.constants import BASE_PATH_PROTO_PYMODEL
-from onchain.logger import log
+import logging
+import logging.config
+from pathlib import Path
+
+import yaml
 
 
-def timestamp_to_integer(ts: Union[datetime, str]) -> int:
-    """Convert timestamp datetime/ string into integer
-
-    Args:
-        ts (Union[datetime, str]): Timestamp value
-
-    Returns:
-        int: Converted timestamp integer
-    """
-    from dateutil.parser import parse
-
-    if isinstance(ts, str):
-        ts = parse(ts)
-
-    ts = ts.astimezone(pytz.timezone("utc"))
-    delta = ts - datetime(1970, 1, 1, tzinfo=timezone.utc)
-    ts_value = int(delta.total_seconds()) * 1000000 + int(delta.microseconds)
-    log.debug(f"Converted {ts} to {ts_value}")
-    return ts_value
-
-
-def decode_b64_json_string(encoded: bytes, format: str = "utf-8") -> dict:
-    """Decode base64 encoded json string
+def setup_logging(
+    log_config: str | dict = str(Path("conf", "log.yaml")),
+    logger_name: str = "onchain",
+) -> None:
+    """Setup logging
 
     Args:
-        encoded (bytes): Encoded json string in provided format
-        format (str): Encoded format. Defaults to utf-8
-
-    Returns:
-        dict: Decoded json string
+        log_config (str | dict, optional): log config filepath. Defaults to "conf/log_config.yaml".
+        logger_name (str, optional): logger name. Defaults to "onchain".
     """
-    return json.loads(b64decode(encoded).decode(format))
-
-
-def get_class_name(object: Type) -> str:
-    """Return object class name
-
-    Args:
-        object (Type): Object instance
-
-    Returns:
-        str: class name
-    """
-    return object.__class__.__name__
+    config = (
+        yaml.safe_load(open(log_config).read())
+        if not isinstance(log_config, dict)
+        else log_config
+    )
+    logging.config.dictConfig(config)
+    logging.getLogger(logger_name)

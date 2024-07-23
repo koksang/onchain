@@ -1,0 +1,180 @@
+input:
+  sql_raw:
+    driver: clickhouse
+    dsn: ${CH_HOST}/ethereum?dial_timeout=200ms&max_execution_time=60
+    query: select max(number) ch_block_number from block
+    init_statement: |
+      CREATE TABLE IF NOT EXISTS block (
+        number Int64 not null,
+        hash String not null,
+        parent_hash String,
+        nonce String,
+        sha3_uncles String,
+        logs_bloom String,
+        transactions_root String,
+        state_root String,
+        receipts_root String,
+        miner String not null,
+        mix_hash String,
+        difficulty Int64 not null,
+        total_difficulty Int64 not null,
+        extra_data String,
+        size Int64 not null,
+        gas_limit Int32 not null,
+        gas_used Int32 not null,
+        timestamp Int64 not null,
+        transactions Array(String),
+        uncles Array(String)
+      )
+      engine = MergeTree()
+      primary key (number);
+    args_mapping: root = [this.ch_block_number]
+pipeline:
+  threads: -1
+  processors:
+    - branch:
+        processors:
+          - cache:
+              operator: get
+              resource: redis_cache
+              key: last_block_number
+          - catch:
+            - log:
+                level: INFO
+                message: "Failed: ${!error()}. no last block found, initializing last block, ${! this }"
+            - cache:
+                operator: set
+                resource: redis_cache
+                key: last_block_number
+                value: 0
+            - cache:
+                operator: get
+                resource: redis_cache
+                key: last_block_number
+        result_map: root.last_block_number = this
+    - log:
+        level: INFO
+        message: "ch: ${! this.ch_block_number } | last: ${! this.last_block_number }"
+    - branch:
+        request_map: |
+          root.method = "eth_blockNumber"
+          root.id = 1
+          root.jsonrpc = "2.0"
+        processors:
+          - http:
+              url: ${NODE_API_URL}
+              verb: POST
+              headers:
+                Content-Type: application/json
+              rate_limit: api_limit
+              timeout: 5s
+        result_map: root.node_block_number = this.result
+    - awk:
+        codec: none
+        program: |
+          function hex2dec(hex) {
+            dec = 0;
+            for (x=1; x<=length(hex); x++) {
+              dec = (dec * 16) + index("123456789abcdef", tolower(substr(hex, x, 1)));
+            }
+            return dec;
+          }
+
+          {
+            json_set_int("node_block_number", hex2dec(json_get("node_block_number")) );
+            json_set_int("latest_block_number", ( json_get("last_block_number")>json_get("ch_block_number")) ? json_get("last_block_number"):json_get("ch_block_number") );
+          }
+    - log:
+        level: INFO
+        message: "node: ${! this.node_block_number } | last:  ${! this.last_block_number }"
+    - mapping: |
+        if this.node_block_number > this.latest_block_number {
+          root = range(
+            start: this.latest_block_number + 1,
+            stop: [
+              this.node_block_number + 1,
+              this.latest_block_number + 1 + ${MAX_NEW_BLOCKS}
+            ].min()
+          )
+        }
+        else {
+          root = deleted()
+        }
+    - unarchive:
+        format: json_array
+    - mapping: root.block_number = this
+    - cache:
+        operator: set
+        resource: redis_cache
+        key: last_block_number
+        value: ${! this.block_number }
+    - log:
+        level: INFO
+        message: "Ingested block number: ${! this.block_number }"
+output:
+  # file:
+  #   path: testing.txt
+  #   codec: lines
+  kafka:
+    addresses: [${KAFKA_HOST}]
+    topic: blockchain.ethereum.blocknumber
+    client_id: benthos
+    target_version: 3.7.0
+    rack_id: ""
+    key: ""
+    partitioner: fnv1a_hash
+    partition: ""
+    compression: none
+    static_headers: {}
+    metadata:
+      exclude_prefixes: []
+    inject_tracing_map: meta = @.merge(this)
+    max_in_flight: 100
+    idempotent_write: false
+    ack_replicas: false
+    max_msg_bytes: 1000000
+    timeout: 5s
+    retry_as_batch: false
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: [] # No default (optional)
+    backoff:
+      initial_interval: 3s
+      max_interval: 10s
+      max_elapsed_time: 30s
+    max_retries: 5
+cache_resources:
+  - label: redis_cache
+    redis:
+      url: ${REDIS_HOST}
+      kind: simple
+      prefix: ethereum_
+      default_ttl: 1h
+rate_limit_resources:
+  - label: api_limit
+    local:
+      count: 1
+      interval: ${API_LIMIT_INTERVAL}
+logger:
+  level: INFO
+  format: logfmt
+  add_timestamp: true
+  level_name: level
+  timestamp_name: time
+  message_name: msg
+  static_fields:
+    "@application": onchain
+    "@blockchain": ethereum
+    "@data": block_number
+metrics:
+  prometheus: {}
+  mapping: ""
+tracer:
+  none: {}
+shutdown_delay: 0s
+shutdown_timeout: 20s
+tests: []
+

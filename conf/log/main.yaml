@@ -1,0 +1,20 @@
+version: 1
+formatters:
+  main:
+    format: "{asctime} [{levelname:^8s}] {module}.{funcName}.{lineno} - {message}"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    style: "{"
+handlers:
+  main:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: main
+    stream: ext://sys.stdout
+loggers:
+  onchain:
+    level: INFO
+    handlers: [main]
+    propagate: no
+root:
+  level: INFO
+  handlers: [main]

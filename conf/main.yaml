@@ -1,0 +1,17 @@
+defaults:
+  - environment: main
+  - clickhouse: local
+  - cluster: local
+  - kafka: local
+  - node: quicknode
+  - log: main
+  - optional service: null
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+# disable hydra logging
+hydra:  
+  output_subdir: null  
+  run:  
+    dir: .
