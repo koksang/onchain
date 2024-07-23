@@ -1,0 +1,141 @@
+---
+# Source: benthos/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: benthos
+  labels:
+    helm.sh/chart: benthos-2.2.0
+    app.kubernetes.io/name: benthos
+    app.kubernetes.io/instance: benthos
+    app.kubernetes.io/version: "4.24.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: benthos/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: benthos-config
+  namespace: onchain
+  labels:
+    helm.sh/chart: benthos-2.2.0
+    app.kubernetes.io/name: benthos
+    app.kubernetes.io/instance: benthos
+    app.kubernetes.io/version: "4.24.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  benthos.yaml: |
+    http:
+      address: 0.0.0.0:4195
+      cors:
+        enabled: false
+      debug_endpoints: false
+      enabled: true
+      root_path: /benthos
+    input:
+      label: "no_config_in"
+      generate:
+        mapping: root = "This Benthos instance is unconfigured!"
+        interval: 1m
+    output:
+      label: "no_config_out"
+      stdout:
+        codec: lines
+---
+# Source: benthos/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: benthos
+  labels:
+    helm.sh/chart: benthos-2.2.0
+    app.kubernetes.io/name: benthos
+    app.kubernetes.io/instance: benthos
+    app.kubernetes.io/version: "4.24.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: benthos
+    app.kubernetes.io/instance: benthos
+---
+# Source: benthos/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benthos
+  labels:
+    helm.sh/chart: benthos-2.2.0
+    app.kubernetes.io/name: benthos
+    app.kubernetes.io/instance: benthos
+    app.kubernetes.io/version: "4.24.0"
+    app.kubernetes.io/managed-by: Helm
+    
+  annotations:
+    {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: benthos
+      app.kubernetes.io/instance: benthos
+  template:
+    metadata:
+      annotations:
+        checksum/config: a1f1be3fca84f93ae70c75c8f666a2233017cc5a2bdf9ac1770889ac801f0b83
+      labels:
+        app.kubernetes.io/name: benthos
+        app.kubernetes.io/instance: benthos
+    spec:
+      serviceAccountName: benthos
+      restartPolicy: Always
+      securityContext:
+        {}
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: benthos
+          securityContext:
+            {}
+          image: "jeffail/benthos:4.24.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-c"
+            - "/benthos.yaml"
+          ports:
+            - name: http
+              containerPort: 4195
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: http
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 2
+          readinessProbe:
+            failureThreshold: 1
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 2
+          env:
+            []
+          resources:
+            {}
+          volumeMounts:
+            - name: config
+              mountPath: "/benthos.yaml"
+              subPath: "benthos.yaml"
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: benthos-config

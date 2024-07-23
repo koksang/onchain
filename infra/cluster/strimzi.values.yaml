@@ -10,7 +10,7 @@ watchAnyNamespace: false
 
 defaultImageRegistry: quay.io
 defaultImageRepository: strimzi
-defaultImageTag: 0.40.0
+defaultImageTag: 0.42.0
 
 image:
   registry: ""
@@ -26,7 +26,7 @@ logLevel: ${env:STRIMZI_LOG_LEVEL:-INFO}
 fullReconciliationIntervalMs: 120000
 operationTimeoutMs: 300000
 kubernetesServiceDnsDomain: cluster.local
-featureGates: "+UseKRaft,+KafkaNodePools,+UnidirectionalTopicOperator"
+featureGates: ""
 tmpDirSizeLimit: 1Mi
 
 # Example on how to configure extraEnvs
@@ -54,11 +54,11 @@ leaderElection:
   enable: true
 
 # https://kubernetes.io/docs/tasks/run-application/configure-pdb/
-podDisruptionBudget:  
+podDisruptionBudget:
   enabled: false
-  # The PDB definition only has two attributes to control the availability requirements: minAvailable or maxUnavailable (mutually exclusive). 
+  # The PDB definition only has two attributes to control the availability requirements: minAvailable or maxUnavailable (mutually exclusive).
   # Field maxUnavailable tells how many pods can be down and minAvailable tells how many pods must be running in a cluster.
-  
+
   # The pdb template will check values according to below order
   #
   #  {{- if .Values.podDisruptionBudget.minAvailable }}
@@ -75,8 +75,8 @@ podDisruptionBudget:
 # If you are using the grafana dashboard sidecar,
 # you can import some default dashboards here
 dashboards:
-  enabled: true
-  namespace: onchain
+  enabled: false
+  namespace: ~
   label: grafana_dashboard # this is the default value from the grafana chart
   labelValue: "1" # this is the default value from the grafana chart
   annotations: {}
@@ -115,12 +115,6 @@ kafkaInit:
     repository: ""
     name: operator
     tag: ""
-tlsSidecarEntityOperator:
-  image:
-    registry: ""
-    repository: ""
-    name: kafka
-    tagPrefix: ""
 kafkaMirrorMaker:
   image:
     registry: ""
@@ -132,7 +126,7 @@ kafkaBridge:
     registry: ""
     repository:
     name: kafka-bridge
-    tag: 0.28.0
+    tag: 0.29.0
 kafkaExporter:
   image:
     registry: ""

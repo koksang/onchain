@@ -1,8 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kafka
+
+---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaNodePool
 metadata:
   name: main
-  namespace: onchain
+  namespace: kafka
   labels:
     strimzi.io/cluster: onchain
 spec:
@@ -42,7 +48,7 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   name: onchain
-  namespace: onchain
+  namespace: kafka
   annotations: # (1)
     strimzi.io/node-pools: enabled
     strimzi.io/kraft: enabled
@@ -91,7 +97,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: kafka-metrics
-  namespace: onchain
+  namespace: kafka
   labels:
     app: strimzi
 data:
@@ -234,3 +240,34 @@ data:
 #   labels:
 #     strimzi.io/cluster: my-cluster
 # spec: {}
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: blockchain.ethereum.block
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: onchain
+spec:
+  partitions: 4
+  replicas: 2
+  config:
+    retention.ms: 1800000
+    segment.bytes: 1000000
+
+# ----------------------------------- topics -----------------------------------
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: blockchain.ethereum.blocknumber
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: onchain
+spec:
+  partitions: 4
+  replicas: 2
+  config:
+    retention.ms: 1800000
+    segment.bytes: 1000000

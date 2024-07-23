@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: knative-serving
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: knative-eventing
+
+---
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+  namespace: knative-serving
+spec:
+  version: 1.14.1
+  ingress:
+    kourier:
+      enabled: true
+  config:
+    network:
+      ingress-class: "kourier.ingress.networking.knative.dev"
+
+---
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeEventing
+metadata:
+  name: knative-eventing
+  namespace: knative-eventing
+spec:
+  version: 1.14.4
+  source:
+    kafka:
+      enabled: true
+
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: event-display
+  namespace: knative-eventing
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/target: "5"
+        autoscaling.knative.dev/metric: "rps"
+        autoscaling.knative.dev/max-scale: "4"
+    spec:
+      containers:
+        - image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display
+
+---
+apiVersion: sources.knative.dev/v1beta1
+kind: KafkaSource
+metadata:
+  name: kafka-source
+  namespace: knative-eventing
+spec:
+  consumerGroup: app
+  bootstrapServers:
+    - onchain-kafka-bootstrap.kafka.svc.cluster.local:9092
+  topics:
+    - blockchain.ethereum.blocknumber
+    - blockchain.ethereum.block
+  consumers: 4
+  sink:
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: event-display

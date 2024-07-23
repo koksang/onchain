@@ -1,8 +1,3 @@
-http:
-  enabled: false
-  address: 0.0.0.0:7777
-  root_path: /benthos
-  debug_endpoints: true
 input:
   sql_raw:
     driver: clickhouse
@@ -37,154 +32,126 @@ input:
 pipeline:
   threads: -1
   processors:
-
+    - branch:
+        processors:
+          - cache:
+              operator: get
+              resource: redis_cache
+              key: last_block_number
+          - catch:
+            - log:
+                level: INFO
+                message: "Failed: ${!error()}. no last block found, initializing last block, ${! this }"
+            - cache:
+                operator: set
+                resource: redis_cache
+                key: last_block_number
+                value: 0
+            - cache:
+                operator: get
+                resource: redis_cache
+                key: last_block_number
+        result_map: root.last_block_number = this
     - log:
         level: INFO
-        message: last = ${! this }
+        message: "ch: ${! this.ch_block_number } | last: ${! this.last_block_number }"
+    - branch:
+        request_map: |
+          root.method = "eth_blockNumber"
+          root.id = 1
+          root.jsonrpc = "2.0"
+        processors:
+          - http:
+              url: ${NODE_API_URL}
+              verb: POST
+              headers:
+                Content-Type: application/json
+              rate_limit: api_limit
+              timeout: 5s
+        result_map: root.node_block_number = this.result
+    - awk:
+        codec: none
+        program: |
+          function hex2dec(hex) {
+            dec = 0;
+            for (x=1; x<=length(hex); x++) {
+              dec = (dec * 16) + index("123456789abcdef", tolower(substr(hex, x, 1)));
+            }
+            return dec;
+          }
+
+          {
+            json_set_int("node_block_number", hex2dec(json_get("node_block_number")) );
+            json_set_int("latest_block_number", ( json_get("last_block_number")>json_get("ch_block_number")) ? json_get("last_block_number"):json_get("ch_block_number") );
+          }
+    - log:
+        level: INFO
+        message: "node: ${! this.node_block_number } | last:  ${! this.last_block_number }"
+    - mapping: |
+        if this.node_block_number > this.latest_block_number {
+          root = range(
+            start: this.latest_block_number + 1,
+            stop: [
+              this.node_block_number + 1,
+              this.latest_block_number + 1 + ${MAX_NEW_BLOCKS}
+            ].min()
+          )
+        }
+        else {
+          root = deleted()
+        }
+    - unarchive:
+        format: json_array
+    - mapping: root.block_number = this
     - cache:
-        operator: get
+        operator: set
         resource: redis_cache
-        key: test_key
-    # - branch:
-    #     processors:
-    #       - cache:
-    #           operator: get
-    #           resource: redis_cache
-    #           key: test_key
-    #     result_map: root.test_key = this
+        key: last_block_number
+        value: ${! this.block_number }
     - log:
         level: INFO
-        message: last = ${! this.ch_block_number }
-    # - catch:
-      # - log:
-      #     level: ERROR
-      #     # message: "Failed: ${!error()}. no last block found, initializing last block, ${! this }"
-      #     message: "Failed: ${!error()}. ${! this }"
-      # - branch:
-      #     processors:
-      #       - cache:
-      #           operator: set
-      #           resource: redis_cache
-      #           key: test_key
-      #           value: 0
-      #       - cache:
-      #           operator: get
-      #           resource: redis_cache
-      #           key: test_key
-      #     result_map: root.test_key = this
-    # - cache:
-    #     operator: set
-    #     resource: redis_cache
-    #     key: test_key
-    #     value: ${! timestamp_unix() }
-    # - log:
-    #     level: INFO
-    #     message: ${! this }
-    # - branch:
-    #     request_map: |
-    #       root.method = "eth_blockNumber"
-    #       root.id = 1
-    #       root.jsonrpc = "2.0"
-    #     processors:
-    #       - http:
-    #           url: ${NODE_API_URL}
-    #           verb: POST
-    #           headers:
-    #             Content-Type: application/json
-    #           rate_limit: api_limit
-    #           timeout: 5s
-    #     result_map: root.node_block_number = this.result
-    # - awk:
-    #     codec: none
-    #     program: |
-    #       function hex2dec(hex) {
-    #         dec = 0;
-    #         for (x=1; x<=length(hex); x++) {
-    #           dec = (dec * 16) + index("123456789abcdef", tolower(substr(hex, x, 1)));
-    #         }
-    #         return dec;
-    #       }
-
-    #       {
-    #         json_set_int("node_block_number", hex2dec(json_get("node_block_number")) );
-    #         json_set_int("latest_block_number", ( json_get("last_block_number")>json_get("ch_block_number")) ? json_get("last_block_number"):json_get("ch_block_number") );
-    #       }
-    # - log:
-    #     level: INFO
-    #     message: node = ${! this.node_block_number }, last =  ${! this.last_block_number }
-    # - mapping: |
-    #     if this.node_block_number > this.latest_block_number {
-    #       root = range(
-    #         start: this.latest_block_number + 1,
-    #         stop: [
-    #           this.node_block_number + 1,
-    #           this.latest_block_number + 1 + ${MAX_NEW_BLOCKS}
-    #         ].min()
-    #       )
-    #     }
-    #     else {
-    #       root = deleted()
-    #     }
-    # - unarchive:
-    #     format: json_array
-    # - mapping: root.block_number = this
-    # # - log:
-    # #     level: INFO
-    # #     message: block = ${! this.block_number }
-    # - cache:
-    #     operator: set
-    #     resource: redis_cache
-    #     key: last_block_number
-    #     value: ${! this.block_number }
-    # - branch:
-    #     processors:
-    #       - cache:
-    #           operator: get
-    #           resource: redis_cache
-    #           key: last_block_number
-    #     result_map: root.last_block_number = this
+        message: "Ingested block number: ${! this.block_number }"
 output:
-  file:
-    path: testing.txt
-    codec: lines
-  # kafka:
-    # addresses: [${KAFKA_HOST}]
-    # topic: blockchain.ethereum.blocknumber
-    # topic: blockchain.ethereum.test
-    # client_id: benthos
-    # target_version: 3.7.0
-    # rack_id: ""
-    # key: ""
-    # partitioner: fnv1a_hash
-    # partition: ""
-    # compression: none
-    # static_headers: {}
-    # metadata:
-    #   exclude_prefixes: []
-    # inject_tracing_map: meta = @.merge(this)
-    # max_in_flight: 100
-    # idempotent_write: false
-    # ack_replicas: false
-    # max_msg_bytes: 1000000
-    # timeout: 5s
-    # retry_as_batch: false
-    # batching:
-    #   count: 0
-    #   byte_size: 0
-    #   period: ""
-    #   check: ""
-    #   processors: [] # No default (optional)
-    # backoff:
-    #   initial_interval: 3s
-    #   max_interval: 10s
-    #   max_elapsed_time: 30s
-    # max_retries: 5
+  # file:
+  #   path: testing.txt
+  #   codec: lines
+  kafka:
+    addresses: [${KAFKA_HOST}]
+    topic: blockchain.ethereum.blocknumber
+    client_id: benthos
+    target_version: 3.7.0
+    rack_id: ""
+    key: ""
+    partitioner: fnv1a_hash
+    partition: ""
+    compression: none
+    static_headers: {}
+    metadata:
+      exclude_prefixes: []
+    inject_tracing_map: meta = @.merge(this)
+    max_in_flight: 100
+    idempotent_write: false
+    ack_replicas: false
+    max_msg_bytes: 1000000
+    timeout: 5s
+    retry_as_batch: false
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: [] # No default (optional)
+    backoff:
+      initial_interval: 3s
+      max_interval: 10s
+      max_elapsed_time: 30s
+    max_retries: 5
 cache_resources:
   - label: redis_cache
     redis:
       url: ${REDIS_HOST}
       kind: simple
-      # prefix: ethereum
+      prefix: ethereum_
       default_ttl: 1h
 rate_limit_resources:
   - label: api_limit
@@ -198,10 +165,10 @@ logger:
   level_name: level
   timestamp_name: time
   message_name: msg
-  # static_fields:
-  #   "@application": onchain
-  #   "@blockchain": ethereum
-  #   "@data": block_number
+  static_fields:
+    "@application": onchain
+    "@blockchain": ethereum
+    "@data": block_number
 metrics:
   prometheus: {}
   mapping: ""
